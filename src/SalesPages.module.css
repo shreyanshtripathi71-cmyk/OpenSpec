@@ -110,10 +110,22 @@
 }
 
 .pageHeader {
+  composes: glassCard from './styles/glass.module.css';
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 24px;
+  border-radius: var(--r-3xl);
+  padding: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(37, 99, 235, 0.08);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(248, 251, 255, 0.56));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.34),
+    0 1px 2px rgba(15, 23, 42, 0.04),
+    0 14px 34px -28px rgba(15, 23, 42, 0.30);
 }
 
 .eyebrow {
@@ -243,7 +255,6 @@
   margin-bottom: 10px;
 }
 
-.heroBand,
 .listHeader,
 .stickyToolbar,
 .fulfillmentCard,
@@ -252,18 +263,15 @@
 .lockScreen {
   composes: glassCard from './styles/glass.module.css';
   border-radius: var(--r-3xl);
-  padding: 24px;
-  border: 1px solid rgba(37, 99, 235, 0.10);
+  padding: 22px;
+  border: 1px solid rgba(37, 99, 235, 0.08);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), rgba(248, 251, 255, 0.56));
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.94),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
     inset 0 0 0 1px rgba(255, 255, 255, 0.34),
     0 1px 2px rgba(15, 23, 42, 0.04),
-    0 16px 38px -30px rgba(15, 23, 42, 0.34);
-}
-
-.heroBand {
-  background: rgba(210, 210, 218, 0.40);
-  border-color: var(--rim);
+    0 14px 34px -28px rgba(15, 23, 42, 0.30);
 }
 
 .sectionHeader,
@@ -599,6 +607,7 @@
   gap: 10px;
   padding: 10px;
   text-align: left;
+  text-decoration: none;
 }
 
 .miniCalendar {
@@ -734,6 +743,56 @@
 .paletteTile:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.catalogCard {
+  position: relative;
+}
+
+.catalogSwatch {
+  display: block;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  margin-bottom: 10px;
+}
+
+.settingsSplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.8fr);
+  gap: 18px;
+}
+
+.previewCard {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.54);
+  padding: 18px;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+}
+
+.previewCard span {
+  color: var(--ink-3);
+}
+
+.toggleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+}
+
+.pinDotFilled {
+  background: var(--accent) !important;
+}
+
+.errorText {
+  color: #dc2626;
+  font-weight: 800;
+  margin: 0;
 }
 
 .dashboardModal {
@@ -885,6 +944,19 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.32);
 }
 
+.tableHeadButton {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  font: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
 .tableRow {
   width: 100%;
   border: 0;
@@ -929,6 +1001,82 @@
   height: 100%;
   border-radius: inherit;
   background: var(--accent);
+}
+
+.detailSection {
+  margin-top: 18px;
+}
+
+.contactCard {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.48);
+  padding: 14px;
+}
+
+.contactCard strong,
+.contactCard span {
+  display: block;
+}
+
+.contactCard span {
+  color: var(--ink-3);
+  margin-top: 3px;
+}
+
+.contactPickerRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.timelineList,
+.breakdownList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+}
+
+.timelineItem > span {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--accent);
+  margin-top: 6px;
+}
+
+.timelineItem strong,
+.timelineItem small {
+  display: block;
+}
+
+.timelineItem small,
+.breakdownRow small {
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.breakdownRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.42);
+  padding: 11px 12px;
+}
+
+.breakdownRow strong,
+.breakdownRow small {
+  display: block;
 }
 
 .toolbar {
@@ -1201,10 +1349,24 @@
 
 .day {
   min-height: 110px;
+  border: 1px solid transparent;
   border-radius: var(--r-xl);
   background: rgba(255, 255, 255, 0.44);
+  color: var(--ink);
   padding: 12px;
   box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.05);
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+.calendarSelected {
+  border-color: rgba(37, 99, 235, 0.35);
+  background: rgba(239, 246, 255, 0.66);
+}
+
+.calendarMuted {
+  opacity: 0.42;
 }
 
 .dayNumber {
