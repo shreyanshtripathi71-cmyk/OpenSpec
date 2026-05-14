@@ -1,0 +1,62 @@
+/* Tiny layout primitives shared by every inspector tab: a labelled
+   `<Field>` (label above input) and a grouped `<Group>` section
+   header. Together they account for ~60% of every inspector tab's
+   structure, so they live in `ui/` rather than per-tab modules. */
+
+.group {
+  flex-direction: column;
+  gap: 11px;
+  display: flex;
+}
+
+.groupHead {
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 2px;
+  display: flex;
+}
+
+.groupTitle {
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.groupHairline {
+  background: var(--hairline-soft);
+  height: 1px;
+  margin: 0;
+}
+
+.field {
+  flex-direction: column;
+  gap: 7px;
+  display: flex;
+}
+
+.fieldLabel {
+  color: var(--ink-2);
+  letter-spacing: -.005em;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 600;
+  display: inline-flex;
+}
+
+.fieldRow {
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 0;
+  display: flex;
+}
+
+.fieldGrid2 {
+  grid-template-columns: 1fr 1fr;
+  gap: 11px;
+  display: grid;
+}

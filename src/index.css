@@ -1,0 +1,123 @@
+/* ═══════════════════════════════════════════════════════════════
+   Apple Liquid Glass — Design System
+   Inspired by iOS 26 Control Center (Clear Glass variant)
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Font loaded via <link rel="preconnect"> + <link> in index.html for faster first paint */
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* ── Ink (text) ── */
+  --ink: #1a1a2e;
+  --ink-2: #2d2d44;
+  --ink-3: #4a4a6a;
+  --ink-mute: #6b6b8d;
+  --ink-faint: #9898b4;
+
+  /* ── Accent ── */
+  --accent: #2563EB;
+  --accent-hover: #1D4ED8;
+  --accent-soft: rgba(37, 99, 235, 0.12);
+
+  /* ── Status ── */
+  --good: #059669;
+  --good-soft: rgba(5, 150, 105, 0.12);
+
+  /* ── Transitions ── */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 0.15s var(--ease-out);
+  --t-base: 0.25s var(--ease-out);
+  --t-slow: 0.4s var(--ease-out);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Base canvas. The actual mesh-gradient + noise are painted by
+   `.scope::before` / `.scope::after` over the entire viewport, so
+   #root just supplies a flat fallback colour that shows through if
+   the configurator is still mounting. Painting them here as well
+   would force the compositor to rasterize TWO viewport-sized layers
+   on every repaint for zero visual benefit.
+   ═══════════════════════════════════════════════════════════════ */
+#root {
+  background: #dcdce4;
+  position: relative;
+  isolation: isolate;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Apple Liquid Glass — The Material
+   Key principles from iOS 26 Control Center:
+   1. Near-zero opacity background (see-through, NOT frosted white)
+   2. Bright specular highlight on top edge (simulates light hitting glass)
+   3. Subtle dark edge on bottom (simulates glass thickness/shadow)
+   4. Gentle inner glow (simulates internal light scatter)
+   5. simulated refraction using gradients and edge highlights
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Blob keyframes moved to ConfiguratorPage.module.css (drift1, drift2) */
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* Utility: hide text selection on interactive elements */
+button,
+[role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}

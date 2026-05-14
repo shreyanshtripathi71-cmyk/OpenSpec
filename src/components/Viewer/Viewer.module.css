@@ -1,0 +1,263 @@
+/* ────────────────────────────────────────────────────────────
+   VIEWER — center column hosting the 3D preview
+   ────────────────────────────────────────────────────────────
+   Layout: card with a top bar (cell chips + live indicator),
+   the 3D canvas in the middle, and a bottom bar with the
+   zoom/rotate/reset controls + W/H/U/SHGC stats. */
+
+.viewerColumn {
+  grid-template-rows: 1fr;
+  gap: 14px;
+  min-height: 0;
+  display: grid;
+}
+
+.viewerCard {
+  composes: glassCard from '../../styles/glass.module.css';
+  position: relative;
+  padding: 18px;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Promote to its own compositor layer once, then leave it there. */
+  will-change: transform;
+  contain: layout style;
+}
+.viewerCard::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 28px;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 18%,
+    rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.22) 100%);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset;
+  z-index: 0;
+}
+.viewerCard::after {
+  content: "";
+  position: absolute;
+  left: 6%; right: 35%; top: 1px;
+  height: 38%;
+  background: radial-gradient(120% 100% at 20% 0%,
+    rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.25) 30%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 32px 32px 80% 50% / 32px 32px 100% 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.viewerCanvasWrap {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1;
+}
+.viewerCanvasWrap canvas {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  background: transparent !important;
+}
+
+/* ── Top bar (cell chips + live pill) ── */
+.viewerTopBar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
+}
+.viewerTopBar > * { pointer-events: auto; }
+
+.glassPill {
+  composes: glassPill from '../../styles/glass.module.css';
+  font-weight: 500;
+  letter-spacing: -0.005em;
+}
+.liveDot {
+  background: var(--good);
+  border-radius: 50%;
+  width: 7px;
+  height: 7px;
+  animation: 2s ease-in-out infinite livePulse;
+  box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.18);
+}
+@keyframes livePulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.18); }
+  50%      { box-shadow: 0 0 0 5px rgba(4, 120, 87, 0.05); }
+}
+
+/* ── Cell chip bar (per-cell switcher when grid has >1 cell) ── */
+.cellChips {
+  position: relative;
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 2px;
+  max-width: 60%;
+  margin-left: auto;
+  padding: 4px;
+  border-radius: 999px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.55) 55%,
+    rgba(255, 255, 255, 0.70) 100%);
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.95) inset,
+    0 1.5px 0    rgba(255, 255, 255, 0.90) inset,
+    0 -1px 0     rgba(255, 255, 255, 0.40) inset,
+    0 0 0 1px    rgba(60, 75, 110, 0.06),
+    0 6px 18px -6px   rgba(20, 35, 80, 0.18),
+    0 16px 40px -12px rgba(20, 35, 80, 0.15);
+  border: none;
+  transition: background .16s ease;
+}
+.cellChips::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 50%);
+  pointer-events: none;
+  mask: linear-gradient(180deg, #000 0%, transparent 60%);
+}
+.cellChips:hover {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.92) 0%,
+    rgba(255, 255, 255, 0.66) 55%,
+    rgba(255, 255, 255, 0.78) 100%);
+}
+
+.cellChip {
+  border: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 7px 20px;
+  min-width: 70px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--ink-2);
+  font-family: inherit;
+  line-height: 1.15;
+  transition: background .18s ease, color .18s ease;
+}
+.cellChip:hover { background: rgba(255, 255, 255, 0.50); }
+.cellChipActive {
+  background: linear-gradient(180deg, #4a72f5 0%, #2454ee 100%) !important;
+  color: #fff !important;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.30) inset,
+    0 1px 0     rgba(255, 255, 255, 0.42) inset,
+    0 -1px 0    rgba(0, 0, 0, 0.20) inset,
+    0 6px 14px -4px rgba(36, 84, 238, 0.50) !important;
+}
+.cellChipId {
+  font-weight: 600;
+  font-size: 12.5px;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.cellChipMeta {
+  font-size: 9.5px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+  line-height: 1;
+}
+.cellChipActive .cellChipId   { color: #fff; }
+.cellChipActive .cellChipMeta { color: rgba(255, 255, 255, 0.65); }
+
+/* ── Bottom bar (controls + stats) ──
+   Hidden in the current build to match the deployed reference UI.
+   The markup stays so we can re-enable it without touching JSX. */
+.viewerBottomBar {
+  display: none;
+}
+
+/* Box shared by the controls cluster + the W/H/U/SHGC stat row. */
+.vbBox {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 10px;
+  gap: 4px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.78) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.78);
+  border-radius: 12px;
+  box-shadow:
+    inset 0 1px 0     rgba(255, 255, 255, 0.95),
+    inset 0 -0.5px 0  rgba(15, 23, 42, 0.05),
+    0 1px 2px         rgba(15, 23, 42, 0.04),
+    0 6px 16px -4px   rgba(15, 23, 42, 0.16);
+  pointer-events: auto;
+}
+
+.vbIcon {
+  width: 28px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background .14s, color .14s;
+  flex-shrink: 0;
+}
+.vbIcon:hover {
+  background: rgba(241, 245, 249, 0.85);
+  color: var(--ink);
+}
+
+.vbSep {
+  width: 1px;
+  height: 18px;
+  background: rgba(15, 23, 42, 0.12);
+  margin: 0 4px;
+  flex-shrink: 0;
+}
+
+.vbStat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 0 4px;
+  flex-shrink: 0;
+}
+.vbStatLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.vbStatValue {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  font-feature-settings: 'tnum';
+}
+
+/* Fullscreen state — applied to the column wrapper by the page. */
+.viewerFull {
+  z-index: 80;
+  border: none;
+  border-radius: 0;
+  position: fixed;
+  inset: 0;
+}

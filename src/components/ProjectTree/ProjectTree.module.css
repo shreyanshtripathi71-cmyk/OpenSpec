@@ -1,0 +1,657 @@
+/* ───────────────────────────────────────────────────────────
+   PROJECT TREE — left sidebar showing the dealer's project
+   ───────────────────────────────────────────────────────────
+   Collapses to a 64-px icon rail by default. Hover/focus opens the
+   full panel, then it stays open until the edge close button is used.
+   The icon rail fades out as the body fades in.
+*/
+
+/* Outer shell. Keep this column fixed at 64px; the expanded body is
+   an overlay that animates with transform/opacity so opening does not
+   force the whole grid to re-layout. */
+.projTree {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  width: 64px;
+  min-width: 64px;
+  max-width: 64px;
+  min-height: 0;
+  overflow: visible;
+  background: linear-gradient(145deg,
+    rgba(255, 255, 255, 0.60) 0%,
+    rgba(255, 255, 255, 0.42) 45%,
+    rgba(255, 255, 255, 0.50) 100%);
+  border: 0.75px solid rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.80);
+  border-left-color: rgba(255, 255, 255, 0.60);
+  border-radius: 24px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.80),
+    inset 0 2px 6px rgba(255, 255, 255, 0.45),
+    inset 0 -2px 4px rgba(15, 23, 42, 0.05),
+    0 4px 24px -4px rgba(20, 35, 80, 0.14),
+    0 16px 56px -16px rgba(20, 35, 80, 0.12);
+}
+.projTree > * { position: relative; z-index: 1; }
+.projTreePinned {
+  z-index: 20;
+}
+
+/* ── Pin / unpin chevron button ── */
+.projTreePinBtn {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 32px;
+  height: 28px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  border-radius: 8px;
+  color: var(--ink-3);
+  cursor: pointer;
+  z-index: 25;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(15, 23, 42, 0.05),
+    0 4px 12px -4px rgba(15, 23, 42, 0.14);
+  transition: opacity .16s ease, color .14s, background .14s;
+}
+.projTreePinBtn:hover {
+  background: rgba(255, 255, 255, 1);
+  color: var(--ink);
+}
+.projTreePinned .projTreePinBtn {
+  top: 50%;
+  left: 268px;
+  right: auto;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 44px;
+  opacity: 1;
+  pointer-events: auto;
+}
+.projTreePinned .projTreePinBtn {
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  color: #ffffff;
+  border-color: rgba(29, 78, 216, 0.5);
+}
+
+/* ── Icon rail (collapsed-state vertical strip) ── */
+.projTreeIconRail {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  width: 64px;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 6px;
+  z-index: 21;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  transition: opacity .16s ease;
+  will-change: opacity;
+}
+.projTreeIconRail::-webkit-scrollbar { display: none; }
+.projTreePinned .projTreeIconRail {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.projTreeRailItem {
+  width: 48px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  color: var(--ink-2);
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.90) 0%,
+    rgba(255, 255, 255, 0.60) 60%,
+    rgba(255, 255, 255, 0.75) 100%);
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 1.00) inset,
+    0 2px 0      rgba(255, 255, 255, 0.90) inset,
+    0 -1px 0     rgba(255, 255, 255, 0.45) inset,
+    0 0 0 1px    rgba(60, 75, 110, 0.06),
+    0 4px 12px -4px rgba(20, 35, 80, 0.15);
+  transition: background .14s, color .14s;
+  flex-shrink: 0;
+  position: relative;
+}
+.projTreeRailItem:hover {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 1.00) 0%,
+    rgba(255, 255, 255, 0.80) 100%);
+  color: var(--ink);
+}
+.projTreeRailItemActive {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 1.00) 0%,
+    rgba(255, 255, 255, 0.85) 100%) !important;
+  color: var(--accent) !important;
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 1.00) inset,
+    0 2px 0      rgba(255, 255, 255, 1.00) inset,
+    0 -1px 0     rgba(255, 255, 255, 0.50) inset,
+    0 0 0 1px    rgba(60, 75, 110, 0.08),
+    0 6px 18px -4px rgba(20, 35, 80, 0.20) !important;
+}
+.projTreeRailSep {
+  width: 32px;
+  height: 1px;
+  background: rgba(60, 75, 110, 0.10);
+  margin: 4px 0;
+  flex-shrink: 0;
+}
+/* Tooltip on hover for icon rail items */
+.projTreeRailItem[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--ink);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.20);
+  pointer-events: none;
+  animation: railTipIn 0.14s ease;
+}
+@keyframes railTipIn {
+  from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+.projTreeRailZoneItem {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  width: 42px;
+  height: 36px;
+  padding: 0 2px;
+  position: relative;
+}
+.projTreeRailCount {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--ink-mute);
+  line-height: 1;
+  pointer-events: none;
+}
+.projTreeRailItemActive .projTreeRailCount { color: var(--accent); }
+
+/* Expanded panel (visible on hover or when pinned). Use neutral page
+   greys so the left column matches the middle/right surfaces instead
+   of reading blue. */
+.projTreeBody {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 22px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(-10px, 0, 0) scaleX(0.985);
+  transform-origin: left center;
+  transition:
+    transform .24s cubic-bezier(.2, 0, .2, 1),
+    opacity .16s ease;
+  will-change: transform, opacity;
+  background: linear-gradient(160deg,
+    rgba(244, 245, 247, 0.96) 0%,
+    rgba(238, 240, 243, 0.94) 45%,
+    rgba(228, 230, 234, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.74);
+  border-left-color: rgba(255, 255, 255, 0.60);
+  box-shadow:
+    inset 0 1px 1px   rgba(255, 255, 255, 0.86),
+    inset 1px 0 1px   rgba(255, 255, 255, 0.56),
+    inset 0 -1px 1px  rgba(15, 23, 42, 0.05),
+    0 1px 2px         rgba(15, 23, 42, 0.04),
+    0 8px 32px -8px   rgba(20, 35, 80, 0.14),
+    0 24px 64px -16px rgba(20, 35, 80, 0.18);
+}
+.projTreePinned .projTreeBody {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate3d(0, 0, 0) scaleX(1);
+}
+
+/* ── Project header ── */
+.projHead {
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+.projEyebrow {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+.projName {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-top: 3px;
+  letter-spacing: -0.012em;
+}
+.projCustomer {
+  font-size: 11px;
+  color: var(--ink-mute);
+  margin-top: 2px;
+}
+.projMeta {
+  font-size: 11px;
+  color: var(--ink-faint);
+  margin-top: 1px;
+  font-feature-settings: 'tnum';
+}
+
+/* ── Margin block ── */
+.projMargin {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+  background: linear-gradient(180deg, rgba(239, 246, 255, 0.45) 0%, transparent 100%);
+}
+.projMarginRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.projMarginLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.projMarginHint {
+  font-size: 10px;
+  color: var(--ink-faint);
+  margin-top: 2px;
+}
+.projMarginValue {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+}
+.projMarginStats {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 9px;
+  font-size: 10px;
+  color: var(--ink-faint);
+  font-family: 'IBM Plex Mono', monospace;
+  font-feature-settings: 'tnum';
+}
+.projMarginStats strong {
+  color: var(--ink-3);
+  font-weight: 700;
+}
+
+/* ── Factory picker ── */
+.projFactory {
+  padding: 11px 12px;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+.projFactoryLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  margin-bottom: 7px;
+}
+.projFactoryBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.70);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: border-color .14s;
+}
+.projFactoryBtn:hover {
+  border-color: rgba(15, 23, 42, 0.14);
+}
+.projFactoryBadge {
+  width: 30px;
+  height: 30px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.08);
+  color: #A855F7;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: .02em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.projFactoryInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+.projFactoryName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.projFactoryFamilies {
+  font-size: 10px;
+  color: var(--ink-mute);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.projFactoryBtn svg {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+}
+
+/* ── Unit list (scrollable) ── */
+.projUnitList {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 6px 4px;
+}
+.projUnitList::-webkit-scrollbar       { width: 6px; }
+.projUnitList::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.15); border-radius: 3px; }
+.projUnitList::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.25); }
+
+.projZone     { padding: 0 4px 8px; }
+.projZoneHead { display: flex; align-items: center; gap: 7px; padding: 8px 4px 6px; }
+.projZoneIcon {
+  width: 22px;
+  height: 22px;
+  display: inline-grid;
+  place-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.25) 100%);
+  color: var(--accent);
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+.projZoneName {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.projZoneCount {
+  font-size: 10px;
+  color: var(--ink-faint);
+  font-weight: 500;
+  font-family: 'IBM Plex Mono', monospace;
+  flex-shrink: 0;
+}
+
+.projUnitRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.40);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  margin-bottom: 4px;
+  transition: background .14s, color .14s, border-color .14s;
+  position: relative;
+  overflow: hidden;
+}
+.projUnitRow:hover {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(15, 23, 42, 0.10);
+}
+.projUnitRowActive {
+  background: linear-gradient(180deg,
+    rgba(239, 246, 255, 0.95) 0%,
+    rgba(219, 234, 254, 0.65) 100%) !important;
+  border-color: rgba(200, 175, 145, 0.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(37, 99, 235, 0.10),
+    0 4px 12px -4px rgba(37, 99, 235, 0.18) !important;
+}
+
+.projUnitDragHandle {
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink-ghost);
+  flex-shrink: 0;
+  cursor: grab;
+}
+.projUnitTypeIcon {
+  width: 24px;
+  height: 24px;
+  display: inline-grid;
+  place-items: center;
+  background: rgba(248, 250, 252, 0.85);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 5px;
+  color: var(--ink-mute);
+  flex-shrink: 0;
+}
+.projUnitRowActive .projUnitTypeIcon {
+  background: rgba(219, 234, 254, 0.95);
+  border-color: rgba(147, 197, 253, 0.7);
+  color: var(--accent);
+}
+
+.projUnitInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: 1px;
+}
+.projUnitTopRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.projUnitId {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--ink-faint);
+  letter-spacing: .04em;
+  flex-shrink: 0;
+}
+.projUnitRowActive .projUnitId { color: #3B82F6; }
+.projUnitName {
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.projUnitRowActive .projUnitName {
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.projUnitFinish {
+  font-size: 9.5px;
+  color: var(--ink-faint);
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+.projUnitRowActive .projUnitFinish { color: #3B82F6; }
+.projUnitDims {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+
+.projUnitRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.projUnitMargin {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  color: var(--ink-mute);
+  background: rgba(241, 245, 249, 0.85);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+.projUnitRowActive .projUnitMargin {
+  color: var(--accent-strong);
+  background: rgba(255, 255, 255, 0.08);
+}
+.projUnitPrice {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.projUnitRowActive .projUnitPrice { color: var(--accent-strong); }
+
+.projUnitActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 2px;
+  flex-shrink: 0;
+}
+.projUnitActions button {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.68);
+  color: var(--ink-mute);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+.projUnitActions button:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink);
+}
+
+.projEmptyRoom {
+  margin: 0 0 6px;
+  padding: 10px;
+  border: 1px dashed rgba(15, 23, 42, 0.12);
+  border-radius: 8px;
+  color: var(--ink-faint);
+  background: rgba(255, 255, 255, 0.32);
+  font-size: 11px;
+  text-align: center;
+}
+
+/* ── Footer ── */
+.projFooter {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px 12px;
+  border-top: 1px solid rgba(15, 23, 42, 0.06);
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.40));
+}
+.projAddRoom, .projAddUnit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background .14s, color .14s, border-color .14s;
+}
+.projAddRoom {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  color: var(--ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+}
+.projAddRoom:hover {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(15, 23, 42, 0.14);
+}
+.projAddUnit {
+  background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+  border: 1px solid rgba(29, 78, 216, 0.6);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.25),
+    0 1px 2px rgba(29, 78, 216, 0.35),
+    0 4px 14px -4px rgba(37, 99, 235, 0.45);
+}
+.projAddUnit:hover { background: linear-gradient(180deg, #4a72f5, #2f5ee8); }

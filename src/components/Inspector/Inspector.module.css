@@ -1,0 +1,303 @@
+/* ────────────────────────────────────────────────────────────
+   INSPECTOR — right-rail card with tabbed configuration UI
+   ────────────────────────────────────────────────────────────
+   4-row grid: product header, tab strip, scrolling body, footer
+   with Previous/Next navigation. The active tab's content is
+   rendered by the page (it knows which <…Tab> component to mount). */
+
+.inspector {
+  composes: glassCard from '../../styles/glass.module.css';
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 28px;
+  /* Override the translucent glassCard tint with a more opaque
+     blue-grey so form controls (Stepper, Select, Toggle, Field
+     labels) have real contrast inside the inspector body.
+     Without this, the page's pastel mesh-gradient shows through
+     and every input visually disappears. */
+  background: linear-gradient(160deg,
+    rgba(232, 236, 246, 0.92) 0%,
+    rgba(220, 226, 240, 0.88) 45%,
+    rgba(228, 233, 244, 0.90) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0   rgba(255, 255, 255, 0.85),
+    inset 0 2px 6px rgba(255, 255, 255, 0.35),
+    inset 0 -2px 4px rgba(15, 23, 42, 0.06),
+    0 1px 2px       rgba(20, 35, 80, 0.06),
+    0 8px 28px -8px rgba(20, 35, 80, 0.18),
+    0 32px 80px -24px rgba(20, 35, 80, 0.22);
+}
+.inspector::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border-radius: 24px;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 18%,
+    rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.22) 100%);
+  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset;
+  z-index: 0;
+}
+.inspector::after {
+  content: "";
+  position: absolute;
+  left: 6%; right: 35%; top: 1px;
+  height: 38%;
+  background: radial-gradient(120% 100% at 20% 0%,
+    rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.25) 30%, rgba(255, 255, 255, 0) 70%);
+  border-radius: 28px 28px 80% 50% / 28px 28px 100% 100%;
+  pointer-events: none;
+  z-index: 0;
+}
+.inspector > * { position: relative; z-index: 1; }
+
+/* ── Product header (title + product code + status chip) ── */
+.productHeadSlim {
+  background: linear-gradient(rgba(255, 255, 255, 0.40), transparent);
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px 4px;
+  display: flex;
+}
+.productHeadSlimLeft {
+  align-items: baseline;
+  gap: 11px;
+  min-width: 0;
+  display: flex;
+}
+.productHeadSlimTitle {
+  color: var(--ink);
+  letter-spacing: -.025em;
+  font-feature-settings: "tnum";
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.productHeadSlimType {
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-mute);
+  border: 1px solid var(--rim);
+  background: rgba(255, 255, 255, 0.30);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.productHeadStatus {
+  color: var(--good);
+  background: var(--good-soft);
+  border: 1px solid rgba(4, 120, 87, 0.20);
+  border-radius: 999px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  display: inline-flex;
+}
+.productHeadStatusDot {
+  background: var(--good);
+  border-radius: 50%;
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.20);
+}
+
+/* ── Tab strip — glass pill (our translucent glass, not solid white) with
+   a blue rounded-rectangle active state and circular tab numbers. ── */
+.tabs {
+  scrollbar-width: none;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.28) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.80),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.04),
+    0 1px 2px rgba(15, 23, 42, 0.04);
+  border-radius: 999px;
+  margin: 14px 16px 6px;
+  padding: 4px;
+  align-items: center;
+  gap: 2px;
+  display: flex;
+  overflow-x: auto;
+}
+.tabs::-webkit-scrollbar { display: none; }
+
+.tab {
+  color: var(--ink-mute);
+  letter-spacing: -.005em;
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast);
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+  flex: 1 0 auto;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  display: inline-flex;
+  position: relative;
+}
+.tab:hover {
+  color: var(--ink-2);
+  background: rgba(255, 255, 255, 0.40);
+}
+.tabActive,
+.tabActive:hover {
+  color: #fff;
+  background: linear-gradient(180deg, #4a72f5 0%, var(--accent-strong) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.30),
+    0 4px 12px -3px rgba(37, 99, 235, 0.40);
+}
+.tabNum {
+  border: 1px solid var(--rim);
+  width: 18px;
+  height: 18px;
+  color: var(--ink-mute);
+  font-feature-settings: "tnum";
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 50%;
+  flex-shrink: 0;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  display: inline-grid;
+}
+.tabActive .tabNum {
+  color: var(--accent-strong);
+  background: #ffffff;
+  border-color: rgba(255, 255, 255, 0.90);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 1px 2px rgba(15, 23, 42, 0.18);
+}
+.tabBadge {
+  background: var(--accent);
+  border-radius: 50%;
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 0 1.5px rgba(37, 99, 235, 0.18);
+}
+.tabActive .tabBadge {
+  background: #ffffff;
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.45);
+}
+
+/* ── Scrolling body ── */
+.inspectorBody {
+  contain: layout style;
+  flex-direction: column;
+  gap: 24px;
+  min-height: 0;
+  padding: 20px 20px 26px;
+  display: flex;
+  overflow-y: auto;
+}
+.inspectorBody::-webkit-scrollbar       { width: 8px; }
+.inspectorBody::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.18) padding-box;
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+.inspectorBody::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.30) padding-box;
+}
+
+/* ── Energy stat grid (used inside the Interior + Glass tabs) ── */
+.energyGrid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  display: grid;
+}
+.energyCard {
+  border: 1px solid var(--rim);
+  box-shadow: var(--shine), 0 1px 2px rgba(15, 23, 42, 0.04);
+  background: rgba(255, 255, 255, 0.30);
+  border-radius: 14px;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  display: flex;
+}
+.energyCardLabel {
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.energyCardValue {
+  color: var(--ink);
+  font-feature-settings: "tnum";
+  letter-spacing: -.025em;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+/* ── Inspector footer (Previous / Next navigation) ── */
+.inspectorFooter {
+  border-top: 1px solid var(--hairline-soft);
+  background: rgba(255, 255, 255, 0.18);
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  display: flex;
+}
+.footerLeft,
+.footerRight {
+  align-items: center;
+  gap: 4px;
+  display: inline-flex;
+}
+.footerBtn {
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 500;
+  display: inline-flex;
+}
+.footerBtn:hover {
+  border-color: var(--rim);
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.38);
+}
+.footerKey {
+  border: 1px solid var(--rim);
+  color: var(--ink-3);
+  box-shadow: var(--shine);
+  background: rgba(255, 255, 255, 0.38);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  margin-left: 2px;
+  padding: 2px 6px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 600;
+}

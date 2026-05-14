@@ -1,0 +1,154 @@
+.select {
+  width: 100%;
+  position: relative;
+}
+
+.selectTrigger {
+  border: 1px solid rgba(15, 23, 42, 0.12);
+  width: 100%;
+  height: 40px;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t-fast), color var(--t-fast), opacity var(--t-fast),
+              box-shadow var(--t-fast), border-color var(--t-fast), transform var(--t-fast);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.90),
+    0 1px 2px rgba(15, 23, 42, 0.05);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 11px 0 13px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+}
+
+.selectTrigger:hover {
+  border-color: rgba(15, 23, 42, 0.20);
+  background: rgba(255, 255, 255, 1.00);
+}
+
+.selectTriggerOpen {
+  border-color: var(--accent);
+  background: rgba(255, 255, 255, 1.00);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.90),
+    0 0 0 3px rgba(37, 99, 235, 0.18);
+}
+
+.selectValue {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+  align-items: center;
+  gap: 8px;
+  display: inline-flex;
+  overflow: hidden;
+}
+
+.selectIcon {
+  font-size: 13px;
+}
+
+.selectChev {
+  color: var(--ink-mute);
+  transition: transform var(--t-fast);
+  flex-shrink: 0;
+}
+
+.selectChevOpen { transform: rotate(180deg); }
+
+.selectAddon {
+  color: var(--ink-mute);
+  font-feature-settings: "tnum";
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Dropdown popup. Use the neutral page/card greys so the menu does
+   not skew blue against the middle and right columns. */
+.selectMenu {
+  z-index: 30;
+  background: linear-gradient(180deg,
+    rgba(244, 245, 247, 0.97) 0%,
+    rgba(238, 240, 243, 0.95) 48%,
+    rgba(228, 230, 234, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.58);
+  max-height: 320px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    inset 0 -1px 0 rgba(15, 23, 42, 0.04),
+    0 1px 2px       rgba(15, 23, 42, 0.07),
+    0 12px 32px -8px  rgba(20, 35, 80, 0.18),
+    0 28px 64px -16px rgba(20, 35, 80, 0.22);
+  border-radius: 12px;
+  padding: 5px;
+  animation: .16s cubic-bezier(.32, .72, 0, 1) menuIn;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  right: 0;
+  overflow-y: auto;
+}
+
+@keyframes menuIn {
+  0%  { opacity: 0; transform: translateY(-6px) scale(.98); }
+  to  { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+.selectOpt {
+  width: 100%;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+  transition: background var(--t-fast);
+  background: 0 0;
+  border: none;
+  border-radius: 14px;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  font-family: inherit;
+  font-size: 13px;
+  display: flex;
+}
+.selectOpt:hover    { background: rgba(15, 23, 42, 0.06); }
+.selectOptActive    { background: rgba(15, 23, 42, 0.05); }
+
+.selectOptInfo {
+  flex-direction: column;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+  display: flex;
+}
+
+.selectOptLabel {
+  color: var(--ink);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  overflow: hidden;
+}
+
+.selectOptDesc {
+  color: var(--ink-mute);
+  font-size: 11.5px;
+}
+
+.selectOptPrice {
+  color: var(--ink-mute);
+  font-feature-settings: "tnum";
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.selectOptCheck {
+  color: var(--ink);
+  flex-shrink: 0;
+}
