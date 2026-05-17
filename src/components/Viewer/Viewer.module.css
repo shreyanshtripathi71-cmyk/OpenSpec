@@ -1,52 +1,30 @@
 /* ────────────────────────────────────────────────────────────
-   VIEWER — center column hosting the 3D preview
-   ────────────────────────────────────────────────────────────
-   Layout: card with a top bar (cell chips + live indicator),
-   the 3D canvas in the middle, and a bottom bar with the
-   zoom/rotate/reset controls + W/H/U/SHGC stats. */
+   VIEWER — center column — OpenSpec v23.4
+   ──────────────────────────────────────────────────────────── */
 
 .viewerColumn {
   grid-template-rows: 1fr;
-  gap: 14px;
+  gap: 0;
   min-height: 0;
   display: grid;
+  position: relative;
 }
 
 .viewerCard {
-  composes: glassCard from '../../styles/glass.module.css';
   position: relative;
-  padding: 18px;
-  border-radius: 32px;
+  padding: 0;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  /* Promote to its own compositor layer once, then leave it there. */
+  background: #FAFBFC;
+  border: none;
+  min-height: 0;
   will-change: transform;
   contain: layout style;
 }
-.viewerCard::before {
-  content: "";
-  position: absolute;
-  inset: 4px;
-  border-radius: 28px;
-  pointer-events: none;
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 18%,
-    rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.22) 100%);
-  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset;
-  z-index: 0;
-}
-.viewerCard::after {
-  content: "";
-  position: absolute;
-  left: 6%; right: 35%; top: 1px;
-  height: 38%;
-  background: radial-gradient(120% 100% at 20% 0%,
-    rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.25) 30%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 32px 32px 80% 50% / 32px 32px 100% 100%;
-  pointer-events: none;
-  z-index: 0;
-}
+.viewerCard::before { display: none; }
+.viewerCard::after  { display: none; }
 
 .viewerCanvasWrap {
   position: relative;
@@ -55,8 +33,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 0;
   z-index: 1;
+  background: #FFFFFF;
+  overflow: hidden;
 }
 .viewerCanvasWrap canvas {
   display: block;
@@ -65,199 +45,400 @@
   background: transparent !important;
 }
 
-/* ── Top bar (cell chips + live pill) ── */
+/* ══════════════════════════════════════════
+   TOP BAR — matches legacy topbar layout
+   ══════════════════════════════════════════ */
 .viewerTopBar {
   position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 12px;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #fff;
+  border-bottom: 1px solid #E2E8F0;
   flex-shrink: 0;
-}
-.viewerTopBar > * { pointer-events: auto; }
-
-.glassPill {
-  composes: glassPill from '../../styles/glass.module.css';
-  font-weight: 500;
-  letter-spacing: -0.005em;
-}
-.liveDot {
-  background: var(--good);
-  border-radius: 50%;
-  width: 7px;
-  height: 7px;
-  animation: 2s ease-in-out infinite livePulse;
-  box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.18);
-}
-@keyframes livePulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(4, 120, 87, 0.18); }
-  50%      { box-shadow: 0 0 0 5px rgba(4, 120, 87, 0.05); }
-}
-
-/* ── Cell chip bar (per-cell switcher when grid has >1 cell) ── */
-.cellChips {
-  position: relative;
-  display: inline-flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 2px;
-  max-width: 60%;
-  margin-left: auto;
-  padding: 4px;
-  border-radius: 999px;
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.85) 0%,
-    rgba(255, 255, 255, 0.55) 55%,
-    rgba(255, 255, 255, 0.70) 100%);
-  box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.95) inset,
-    0 1.5px 0    rgba(255, 255, 255, 0.90) inset,
-    0 -1px 0     rgba(255, 255, 255, 0.40) inset,
-    0 0 0 1px    rgba(60, 75, 110, 0.06),
-    0 6px 18px -6px   rgba(20, 35, 80, 0.18),
-    0 16px 40px -12px rgba(20, 35, 80, 0.15);
-  border: none;
-  transition: background .16s ease;
-}
-.cellChips::after {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 50%);
-  pointer-events: none;
-  mask: linear-gradient(180deg, #000 0%, transparent 60%);
-}
-.cellChips:hover {
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(255, 255, 255, 0.66) 55%,
-    rgba(255, 255, 255, 0.78) 100%);
 }
 
-.cellChip {
+.topBarGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── Segment toggle (2D/3D, Exterior/Interior) ── */
+.segGroup {
+  display: inline-flex;
+  background: #F1F5F9;
+  border-radius: 3px;
+  padding: 2px;
+  gap: 1px;
+}
+.segBtn {
+  padding: 5px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 2px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #64748B;
+  cursor: pointer;
+  transition: all .12s;
+  white-space: nowrap;
+}
+.segBtn:hover { color: #334155; background: rgba(255,255,255,0.5); }
+.segBtnActive {
+  background: #FFFFFF !important;
+  color: #0F172A !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+/* ── Toolbar toggle buttons (Dims, Price, Notes) ── */
+.tbBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: 1px solid #E2E8F0;
+  background: #FFFFFF;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all .12s;
+}
+.tbBtn svg { flex-shrink: 0; }
+.tbBtn:hover { background: #F8FAFC; border-color: #CBD5E1; color: #0F172A; }
+.tbBtnActive {
+  background: #E8E8F5 !important;
+  border-color: #9090C0 !important;
+  color: #2e5bc8 !important;
+}
+.tbBtnActive svg { color: #2e5bc8; }
+
+/* ══════════════════════════════════════════
+   CELL TABS — compact boxy selector
+   ══════════════════════════════════════════ */
+.cellTabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 3px;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+}
+.cellTab {
   border: none;
   background: transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 7px 20px;
-  min-width: 70px;
-  border-radius: 999px;
+  padding: 5px 10px;
+  min-width: 44px;
+  border-radius: 2px;
   cursor: pointer;
-  font-size: 12px;
-  color: var(--ink-2);
   font-family: inherit;
+  font-size: 11.5px;
+  color: #475569;
   line-height: 1.15;
-  transition: background .18s ease, color .18s ease;
+  transition: all .12s;
 }
-.cellChip:hover { background: rgba(255, 255, 255, 0.50); }
-.cellChipActive {
-  background: linear-gradient(180deg, #4a72f5 0%, #2454ee 100%) !important;
-  color: #fff !important;
-  box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.30) inset,
-    0 1px 0     rgba(255, 255, 255, 0.42) inset,
-    0 -1px 0    rgba(0, 0, 0, 0.20) inset,
-    0 6px 14px -4px rgba(36, 84, 238, 0.50) !important;
-}
-.cellChipId {
+.cellTab strong {
   font-weight: 600;
-  font-size: 12.5px;
-  color: var(--ink);
+  font-size: 12px;
+  color: inherit;
+}
+.cellTab span {
+  font-size: 9px;
+  color: #94A3B8;
+  margin-top: 1px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-feature-settings: 'tnum';
+}
+.cellTab:hover {
+  color: #0F172A;
+  background: #FFFFFF;
+}
+.cellTabActive {
+  background: #2e5bc8 !important;
+  color: #fff !important;
+  box-shadow: 0 1px 3px rgba(46,91,200,0.3);
+}
+.cellTabActive strong { color: #fff; }
+.cellTabActive span { color: rgba(255,255,255,0.8); }
+
+/* ══════════════════════════════════════════
+   NOTES PANEL — top-right on canvas
+   ══════════════════════════════════════════ */
+.notesPanel {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 280px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #E2E8F0;
+  border-radius: 3px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  z-index: 15;
+  animation: panelSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.notesPanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid #E2E8F0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.notesPanelClose {
+  width: 20px; height: 20px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all .12s;
+}
+.notesPanelClose:hover { background: #FEE2E2; border-color: #FECACA; color: #EF4444; }
+.notesPanelBody { padding: 6px 0; }
+.notesPanelRow {
+  padding: 5px 12px;
+}
+.notesPanelKey {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #94A3B8;
+  margin-bottom: 1px;
+}
+.notesPanelVal {
+  display: block;
+  font-size: 11.5px;
+  color: #0F172A;
+  line-height: 1.3;
+}
+
+/* ══════════════════════════════════════════
+   DIMS OVERLAY — bottom-left on canvas
+   (matches legacy dimsOverlay exactly)
+   ══════════════════════════════════════════ */
+.dimsOverlay {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  display: flex;
+  gap: 14px;
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #475569;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid #E2E8F0;
+  border-radius: 2px;
+  padding: 6px 10px;
+  z-index: 10;
+  font-feature-settings: 'tnum';
+  pointer-events: none;
+}
+
+/* ══════════════════════════════════════════
+   FLOATING PRICE PANEL — GPU-accelerated
+   ══════════════════════════════════════════ */
+.pricePanel {
+  position: absolute;
+  z-index: 30;
+  width: 280px;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 6px;
+  box-shadow:
+    0 4px 6px rgba(15, 23, 42, 0.05),
+    0 10px 24px rgba(15, 23, 42, 0.10),
+    0 20px 48px rgba(15, 23, 42, 0.06);
+  user-select: none;
+  touch-action: none;
+  will-change: transform;
+  animation: panelSlideIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+@keyframes panelSlideIn {
+  from { opacity: 0; transform: translate3d(14px, 4px, 0) scale(0.97); }
+  to   { opacity: 1; transform: translate3d(14px, 14px, 0) scale(1); }
+}
+
+.pricePanelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+  border-bottom: 1px solid #E2E8F0;
+  cursor: grab;
+  touch-action: none;
+}
+.pricePanelHeader:active { cursor: grabbing; }
+
+.pricePanelTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F172A;
   letter-spacing: -0.01em;
-  line-height: 1.1;
 }
-.cellChipMeta {
-  font-size: 9.5px;
-  color: var(--ink-mute);
-  margin-top: 2px;
-  line-height: 1;
+.pricePanelHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
-.cellChipActive .cellChipId   { color: #fff; }
-.cellChipActive .cellChipMeta { color: rgba(255, 255, 255, 0.65); }
+.pricePanelLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #10B981;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.pricePanelLiveDot {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: #10B981;
+  animation: livePulse 2s ease-in-out infinite;
+}
+.pricePanelClose {
+  width: 22px; height: 22px;
+  display: inline-grid;
+  place-items: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: #94A3B8;
+  cursor: pointer;
+  transition: all .12s;
+}
+.pricePanelClose:hover { background: #FEE2E2; border-color: #FECACA; color: #EF4444; }
 
-/* ── Bottom bar (controls + stats) ──
-   Hidden in the current build to match the deployed reference UI.
-   The markup stays so we can re-enable it without touching JSX. */
+.pricePanelBody { padding: 10px 12px 6px; }
+.pricePanelSectionLabel {
+  font-size: 9px; font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94A3B8;
+  margin-bottom: 6px;
+}
+.pricePanelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 3px 0;
+}
+.pricePanelRowLabel { font-size: 11.5px; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pricePanelRowValue {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px; font-weight: 600;
+  color: #0F172A;
+  font-feature-settings: 'tnum';
+  flex-shrink: 0;
+}
+
+.pricePanelTotals { padding: 0 12px 10px; }
+.pricePanelDivider { height: 1px; background: #E2E8F0; margin: 6px 0; }
+.pricePanelTotalRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 12px;
+  color: #64748B;
+}
+.pricePanelTotalVal {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; font-weight: 700;
+  color: #475569;
+  font-feature-settings: 'tnum';
+}
+.pricePanelGrandRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 4px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #0F172A;
+}
+.pricePanelGrandVal {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 16px; font-weight: 700;
+  color: #2e5bc8;
+  font-feature-settings: 'tnum';
+  letter-spacing: -0.02em;
+}
+
+/* ══════════════════════════════════════════
+   BOTTOM BAR
+   ══════════════════════════════════════════ */
 .viewerBottomBar {
-  display: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #FFFFFF;
+  flex-shrink: 0;
+  z-index: 2;
 }
-
-/* Box shared by the controls cluster + the W/H/U/SHGC stat row. */
 .vbBox {
   display: inline-flex;
   align-items: center;
-  height: 36px;
+  height: 34px;
   padding: 0 10px;
   gap: 4px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.78) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.78);
-  border-radius: 12px;
-  box-shadow:
-    inset 0 1px 0     rgba(255, 255, 255, 0.95),
-    inset 0 -0.5px 0  rgba(15, 23, 42, 0.05),
-    0 1px 2px         rgba(15, 23, 42, 0.04),
-    0 6px 16px -4px   rgba(15, 23, 42, 0.16);
-  pointer-events: auto;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 2px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
 }
-
 .vbIcon {
-  width: 28px;
-  height: 28px;
+  width: 28px; height: 28px;
   display: inline-grid;
   place-items: center;
   background: transparent;
   border: 0;
-  border-radius: 8px;
-  color: var(--ink-3);
+  border-radius: 2px;
+  color: #475569;
   cursor: pointer;
-  transition: background .14s, color .14s;
+  transition: background .12s, color .12s;
   flex-shrink: 0;
 }
-.vbIcon:hover {
-  background: rgba(241, 245, 249, 0.85);
-  color: var(--ink);
-}
-
-.vbSep {
-  width: 1px;
-  height: 18px;
-  background: rgba(15, 23, 42, 0.12);
-  margin: 0 4px;
-  flex-shrink: 0;
-}
-
-.vbStat {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  padding: 0 4px;
-  flex-shrink: 0;
-}
-.vbStatLabel {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--ink-mute);
-}
+.vbIcon:hover { background: #F1F5F9; color: #0F172A; }
+.vbSep { width: 1px; height: 18px; background: #E2E8F0; margin: 0 4px; flex-shrink: 0; }
+.vbStat { display: inline-flex; align-items: baseline; gap: 5px; padding: 0 4px; flex-shrink: 0; }
+.vbStatLabel { font-size: 9.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #94A3B8; }
 .vbStatValue {
   font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink);
-  letter-spacing: -0.01em;
+  font-size: 12px; font-weight: 700; color: #0F172A;
   font-feature-settings: 'tnum';
 }
 
-/* Fullscreen state — applied to the column wrapper by the page. */
-.viewerFull {
-  z-index: 80;
-  border: none;
-  border-radius: 0;
-  position: fixed;
-  inset: 0;
-}
+/* Fullscreen */
+.viewerFull { z-index: 80; border: none; border-radius: 0; position: fixed; inset: 0; }

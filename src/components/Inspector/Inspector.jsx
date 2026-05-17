@@ -29,6 +29,8 @@ export function Inspector({
 
   return (
     <aside className={styles.inspector}>
+      {/* Top accent bar — legacy: height:3px;background:linear-gradient(90deg,#2e5bc8,#3568d6) */}
+      <div className={styles.accentBar} />
       <header className={styles.productHeadSlim}>
         <div className={styles.productHeadSlimLeft}>
           <h2 className={styles.productHeadSlimTitle}>{windowTypeLabel}</h2>
@@ -59,22 +61,26 @@ export function Inspector({
 
       <footer className={styles.inspectorFooter}>
         <div className={styles.footerLeft}>
-          <button className={styles.footerBtn} type="button" onClick={goToPrev}>
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-              <path d="M10 12 6 8l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-            Previous
-            <span className={styles.footerKey}>←</span>
-          </button>
+          {currentIndex > 0 && (
+            <button className={styles.footerBtn} type="button" onClick={goToPrev}>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path d="M10 12 6 8l4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+              </svg>
+              Previous
+              <span className={styles.footerKey}>←</span>
+            </button>
+          )}
         </div>
         <div className={styles.footerRight}>
-          <button className={styles.footerBtn} type="button" onClick={goToNext}>
-            Next
-            <span className={styles.footerKey}>→</span>
-            <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
-              <path d="M6 12l4-4-4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </button>
+          {currentIndex < SECTION_CONFIG.length - 1 && (
+            <button className={styles.footerBtn} type="button" onClick={goToNext}>
+              Next
+              <span className={styles.footerKey}>→</span>
+              <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
+                <path d="M6 12l4-4-4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+              </svg>
+            </button>
+          )}
         </div>
       </footer>
     </aside>

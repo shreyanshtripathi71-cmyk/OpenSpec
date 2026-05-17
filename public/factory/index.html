@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenSpec · Factory · Northforge</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<nav class="topbar">
+  <div class="brand">
+    <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+      <rect x="2" y="2" width="16" height="16" rx="3.6" fill="#2e5bc8"/>
+      <rect x="5" y="5" width="4" height="4" fill="#fff" opacity=".95"/>
+      <rect x="11" y="5" width="4" height="4" fill="#fff" opacity=".7"/>
+      <rect x="5" y="11" width="4" height="4" fill="#fff" opacity=".7"/>
+      <rect x="11" y="11" width="4" height="4" fill="#fff" opacity=".95"/>
+    </svg>
+    OpenSpec
+  </div>
+  <button class="nav-item active" data-view="dashboard">Dashboard</button>
+  <button class="nav-item" data-view="production">Overview</button>
+  <button class="nav-item" data-view="estimates">Estimates</button>
+  <button class="nav-item" data-view="pipeline">Production</button>
+  <button class="nav-item" data-view="qc">QC</button>
+  <button class="nav-item" data-view="shipping">Shipping</button>
+  <button class="nav-item" data-view="quotes">Quotes</button>
+  <button class="nav-item" data-view="catalog">Catalog</button>
+  <button class="nav-item" data-view="materials">Materials</button>
+  <button class="nav-item" data-view="financials">Financials</button>
+  <button class="nav-item" data-view="dealers">Dealers</button>
+  <button class="nav-item" data-view="settings">Settings</button>
+
+  <div class="nav-spacer"></div>
+
+  <div class="nav-meta">
+    <button class="topnav-search-btn" onclick="openGlobalSearch()" title="Search · Cmd+K">
+      <span>🔍</span>
+      <span class="topnav-search-label">Search</span>
+      <kbd class="topnav-search-kbd">⌘K</kbd>
+    </button>
+    <button class="notif-bell" id="notifBell" onclick="toggleNotifPanel()" title="Notifications">
+      <span class="notif-bell-icon">🔔</span>
+      <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+    </button>
+    <button class="dark-toggle" id="darkToggle" title="Toggle dark mode">☀</button>
+    <div class="tenant-badge">
+      <div class="tenant-avatar">NF</div>
+      Northforge
+    </div>
+  </div>
+</nav>
+
+<!-- Notification panel (slides in from right) -->
+<div id="notifPanel"></div>
+
+<!-- Cmd+K global search overlay -->
+<div id="globalSearchRoot"></div>
+
+<main id="dashboard-view" class="view active"></main>
+<main id="quotes-view" class="view"></main>
+<main id="configurator-view" class="view"></main>
+<main id="production-view" class="view"></main>
+<main id="pipeline-view" class="view"></main>
+<main id="estimates-view" class="view"></main>
+<main id="qc-view" class="view"></main>
+<main id="shipping-view" class="view"></main>
+<main id="catalog-view" class="view"></main>
+<main id="materials-view" class="view"></main>
+<main id="pricing-view" class="view"></main>
+<main id="financials-view" class="view"></main>
+<main id="dealers-view" class="view"></main>
+<main id="audit-view" class="view"></main>
+<main id="settings-view" class="view"></main>
+
+<!-- Modal overlay -->
+<div id="modal-root"></div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script src="app.js"></script>
+</body>
+</html>

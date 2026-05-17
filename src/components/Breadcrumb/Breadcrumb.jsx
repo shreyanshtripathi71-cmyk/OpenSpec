@@ -32,7 +32,7 @@ export function Breadcrumb({
           {lastSavedAt ? 'Saved' : 'Saving…'}
         </span>
 
-        <button className={styles.osBcLockBtn} type="button" title="Lock column widths">
+        <button className={styles.osBcLockBtn} type="button" title="Lock Column Widths">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
             <path d="M4 7V5a4 4 0 018 0v2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
             <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.5" />

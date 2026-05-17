@@ -1,0 +1,336 @@
+/* ================================================================
+   OpenSpec — Login Portal Styles
+   Design System: Enterprise Flat, Sharp Corners, Blue Accent (#2e5bc8)
+   Typography: Inter (UI) + IBM Plex Mono (data/footer)
+   
+   React Reference:
+   - This page maps to a single <LoginPage /> component
+   - User cards → <UserCard role="master|dealer|sales|factory" />
+   - Login form → <LoginForm />
+   - Nav bar → <OsNav /> (already exists in React)
+   ================================================================ */
+
+/* ── Reset ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: #FAFBFC;
+  color: #0F172A;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+
+/* ================================================================
+   Navigation Bar
+   React: <OsNav /> — already implemented in src/components/OsNav/
+   ================================================================ */
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  height: 64px;
+  border-bottom: 1px solid #E2E8F0;
+  background: #fff;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+  color: #0F172A;
+}
+
+.nav-back {
+  font-size: 13px;
+  color: #475569;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 2px;
+  font-weight: 500;
+  transition: all .15s;
+}
+
+.nav-back:hover {
+  color: #0F172A;
+  background: #F1F5F9;
+}
+
+
+/* ================================================================
+   Main Content Area
+   React: <LoginCard /> wrapper
+   ================================================================ */
+.main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.login-card {
+  background: #fff;
+  border: 1px solid #E2E8F0;
+  border-radius: 3px;
+  padding: 40px;
+  max-width: 480px;
+  width: 100%;
+}
+
+.login-title {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.login-sub {
+  font-size: 13px;
+  color: #64748B;
+  margin-bottom: 28px;
+}
+
+
+/* ================================================================
+   User Type Selection Cards
+   React: <UserCard role="master" label="Master Admin" />
+   
+   Each card is a clickable link to a portal.
+   Roles have distinct icon colors:
+     - master  → #2e5bc8 (enterprise blue)
+     - dealer  → #94A3B8 (slate/disabled)
+     - sales   → #16A34A (green)
+     - factory → #7C3AED (purple)
+   ================================================================ */
+.user-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border: 1px solid #E2E8F0;
+  border-radius: 3px;
+  background: #FAFBFC;
+  cursor: pointer;
+  text-decoration: none;
+  color: #0F172A;
+  transition: border-color 120ms, background 120ms, box-shadow 120ms;
+}
+
+.user-card:hover {
+  border-color: #2e5bc8;
+  background: #eaeaf2;
+  box-shadow: 0 0 0 1px #2e5bc8;
+}
+
+.user-card.locked {
+  opacity: 0.5;
+  pointer-events: none;
+  cursor: not-allowed;
+  background: #F8FAFC;
+}
+
+.user-card.locked:hover {
+  border-color: #E2E8F0;
+  background: #F8FAFC;
+  box-shadow: none;
+}
+
+/* Role icon (40×40 square with initials) */
+.user-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.user-icon.master  { background: #2e5bc8; color: #fff; }
+.user-icon.dealer  { background: #94A3B8; color: #fff; }
+.user-icon.sales   { background: #16A34A; color: #fff; }
+.user-icon.factory { background: #7C3AED; color: #fff; }
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.user-name {
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.user-desc {
+  font-size: 11px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.user-arrow {
+  color: #CBD5E1;
+  font-size: 16px;
+  transition: color 120ms, transform 120ms;
+}
+
+.user-card:hover .user-arrow {
+  color: #2e5bc8;
+  transform: translateX(2px);
+}
+
+.user-card.locked .user-arrow {
+  display: none;
+}
+
+.badge-locked {
+  font-size: 9px;
+  font-weight: 700;
+  color: #94A3B8;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 1px 6px;
+  border-radius: 2px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+
+/* ================================================================
+   Section Divider
+   React: <Divider label="or sign in with credentials" />
+   ================================================================ */
+.divider-text {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+  font-size: 11px;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+
+.divider-text::before,
+.divider-text::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #E2E8F0;
+}
+
+
+/* ================================================================
+   Login Form
+   React: <LoginForm onSubmit={handleLogin} />
+   ================================================================ */
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0F172A;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid #E2E8F0;
+  border-radius: 2px;
+  font-size: 13px;
+  font-family: inherit;
+  background: #FAFBFC;
+  outline: none;
+  transition: border-color 120ms;
+}
+
+.form-input:focus {
+  border-color: #2e5bc8;
+  background: #fff;
+}
+
+.btn-login {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 2px;
+  background: #2e5bc8;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.btn-login:hover {
+  background: #2651b3;
+}
+
+.form-footer {
+  text-align: center;
+  margin-top: 16px;
+  font-size: 11px;
+  color: #94A3B8;
+}
+
+.form-footer a {
+  color: #2e5bc8;
+  text-decoration: none;
+}
+
+.form-footer a:hover {
+  text-decoration: underline;
+}
+
+
+/* ================================================================
+   Footer
+   React: <Footer /> — simple copyright bar
+   ================================================================ */
+.footer {
+  padding: 14px 24px;
+  border-top: 1px solid #E2E8F0;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #94A3B8;
+  font-family: 'IBM Plex Mono', monospace;
+}

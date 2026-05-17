@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OpenSpec · Sign In</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     Navigation Bar
+     React: <OsNav />
+     ═══════════════════════════════════════════════ -->
+<nav class="nav">
+  <a href="/landing/" class="nav-brand">
+    <svg width="28" height="28" viewBox="0 0 20 20" fill="none">
+      <rect x="2" y="2" width="16" height="16" rx="3.6" fill="#2e5bc8"/>
+      <rect x="5" y="5" width="4" height="4" fill="#fff" opacity=".95"/>
+      <rect x="11" y="5" width="4" height="4" fill="#fff" opacity=".7"/>
+      <rect x="5" y="11" width="4" height="4" fill="#fff" opacity=".7"/>
+      <rect x="11" y="11" width="4" height="4" fill="#fff" opacity=".95"/>
+    </svg>
+    OpenSpec
+  </a>
+  <a href="/landing/" class="nav-back">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to home
+  </a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+     Main Login Card
+     React: <LoginPage />
+     ═══════════════════════════════════════════════ -->
+<main class="main">
+  <div class="login-card">
+    <h1 class="login-title">Welcome back</h1>
+    <p class="login-sub">Select your portal to sign in</p>
+
+    <!-- ── Portal Selection Cards ── -->
+    <!-- React: <UserCard role="master" href="/master-login/" /> -->
+    <div class="user-grid">
+      <a href="/master-login/" class="user-card" id="login-master">
+        <div class="user-icon master">MA</div>
+        <div class="user-info">
+          <div class="user-name">Master Admin</div>
+          <div class="user-desc">System configuration, user management, global settings</div>
+        </div>
+        <span class="user-arrow">→</span>
+      </a>
+
+      <div class="user-card locked" id="login-dealer">
+        <div class="user-icon dealer">DL</div>
+        <div class="user-info">
+          <div class="user-name">Dealer <span class="badge-locked">Coming soon</span></div>
+          <div class="user-desc">Quotes, orders, customer management, commissions</div>
+        </div>
+      </div>
+
+      <a href="/sales/" class="user-card" id="login-sales">
+        <div class="user-icon sales">SR</div>
+        <div class="user-info">
+          <div class="user-name">Sales Rep</div>
+          <div class="user-desc">Configure products, create quotes, manage pipeline</div>
+        </div>
+        <span class="user-arrow">→</span>
+      </a>
+
+      <a href="/factory/" class="user-card" id="login-factory">
+        <div class="user-icon factory">FO</div>
+        <div class="user-info">
+          <div class="user-name">Factory Owner</div>
+          <div class="user-desc">Production queue, scheduling, inventory, dispatch</div>
+        </div>
+        <span class="user-arrow">→</span>
+      </a>
+    </div>
+
+    <!-- ── Divider ── -->
+    <div class="divider-text">or sign in with credentials</div>
+
+    <!-- ── Login Form ── -->
+    <!-- React: <LoginForm onSubmit={handleLogin} /> -->
+    <div class="form-group">
+      <label class="form-label" for="email">Email</label>
+      <input type="email" id="email" class="form-input" placeholder="you@company.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input type="password" id="password" class="form-input" placeholder="Enter password">
+    </div>
+    <button class="btn-login" onclick="window.location.href='/sales/'">Sign In</button>
+    <div class="form-footer">
+      Forgot password? <a href="#">Reset here</a> · <a href="/landing/">Back to home</a>
+    </div>
+  </div>
+</main>
+
+<!-- ═══════════════════════════════════════════════
+     Footer
+     React: <Footer />
+     ═══════════════════════════════════════════════ -->
+<footer class="footer">
+  <span>© 2026 OpenSpec Systems Inc.</span>
+  <span>SOC 2 Type II</span>
+</footer>
+
+</body>
+</html>

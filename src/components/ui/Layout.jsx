@@ -23,6 +23,53 @@ export function Group({ title, children }) {
   );
 }
 
+/* ────────────────────────────────────────────────────────────
+   DetailsBox — collapsible white card section
+   ────────────────────────────────────────────────────────────
+   Renders a native <details> element styled as a white card
+   with box-shadow, matching the legacy OpenSpec configurator.
+   
+   Props:
+     title       — bold section title (left of summary)
+     chip        — optional value chip shown on the right
+     chipColor   — 'blue' (default) | 'amber' | 'green'
+     defaultOpen — whether to render open initially (default: true)
+     pinned      — if true, cannot be collapsed (always open, no arrow)
+     children    — the section body
+*/
+export function DetailsBox({
+  title,
+  chip,
+  chipColor = 'blue',
+  defaultOpen = true,
+  pinned = false,
+  children,
+}) {
+  const chipClass = chipColor === 'amber'
+    ? styles.detailsChipAmber
+    : chipColor === 'green'
+      ? styles.detailsChipGreen
+      : chipColor === 'red'
+        ? styles.detailsChipRed
+        : styles.detailsChip;
+
+  return (
+    <details
+      className={styles.detailsBox}
+      open={defaultOpen || pinned || undefined}
+      {...(pinned ? { 'data-pinned': 'true' } : {})}
+    >
+      <summary className={styles.detailsSummary}>
+        <span className={styles.detailsTitle}>{title}</span>
+        {chip && <span className={chipClass}>{chip}</span>}
+      </summary>
+      <div className={styles.detailsBody}>
+        {children}
+      </div>
+    </details>
+  );
+}
+
 /* Re-export class names for tabs that need to use the raw layout
    utilities (grid-2, row, hairline) directly inside their JSX. */
 export const layoutStyles = styles;

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { WINDOW_TYPES } from '@/data/windows';
 import {
@@ -13,24 +13,41 @@ import {
   FRAME_COLORS,
   BRICKMOULD_OPTIONS,
   NAILING_FIN_OPTIONS,
+  CUT_FOR_SIDING_OPTIONS,
   GLAZING_TYPES,
   GLASS_THICKNESS_OPTIONS,
   LOW_E_COATINGS,
   GAS_TYPES,
   SPACER_TYPES,
   SPACER_COLOR_OPTIONS,
-  TINT_FROSTING_OPTIONS,
+  TINT_OPTIONS,
+  FROSTED_GLASS_OPTIONS,
   SECURITY_GLASS_OPTIONS,
+  SCREEN_MESH_OPTIONS,
+  SASH_LIMITER_OPTIONS,
+  TEMPERED_GLASS_OPTIONS,
   HARDWARE_COLORS,
   OPENING_DIRECTIONS,
   SCREEN_TYPES,
-  SPECIAL_GLAZING_OPTIONS,
   GRILL_BAR_SIZES,
   GRILL_COLORS,
   WINDOW_CONSTRAINTS,
   WINDOW_MODEL_PATHS,
   getWindowTypeOptions,
   computeEnergyRatings,
+  HARDWARE_FINISHES,
+  WINDOW_LOCK_STYLES,
+  HUNG_BALANCES,
+  WINDOW_OPERATORS,
+  HARDWARE_TYPE_CASEMENT,
+  HARDWARE_TYPE_SLIDER,
+  NIGHTLATCH_OPTIONS,
+  INTERIOR_RETURN_OPTIONS,
+  JAMB_DEPTH_OPTIONS,
+  BRICKMOULD_CATALOG,
+  WINDOW_SCREEN_OPTIONS,
+  TILT_FEATURE_OPTIONS,
+  GLASS_DESIGN_OPTIONS,
 } from '@/data/configuratorData';
 
 import { Wizard }                 from './components/Wizard/Wizard';
@@ -46,17 +63,19 @@ import { GrillesTab }             from './components/Inspector/GrillesTab';
 import { Footer }                 from './components/Footer/Footer';
 import { Toast, UpdatingOverlay } from './components/Toast/Toast';
 import {
-  Field, Group, Select, Swatches, Toggle, layoutStyles,
+  Field, Group, DetailsBox, Select, Swatches, Toggle, layoutStyles,
 } from './components/ui';
 
 import styles from './ConfiguratorPage.module.css';
 
 const FRAME_COLOR_SWATCHES = [
-  { value: 'white-137',            label: 'White 137',         hex: '#BCBCB8' },
-  { value: 'almond-532',           label: 'Almond 532',        hex: '#C8B89A' },
-  { value: 'commercial-brown-424', label: 'Commercial Brown',  hex: '#5C3A21' },
-  { value: 'iron-ore-697',         label: 'Iron Ore 697',      hex: '#434343' },
-  { value: 'black-525',            label: 'Black 525',         hex: '#1A1A1A' },
+  { value: 'white',    label: 'Classic White',      hex: '#FAFAFA' },
+  { value: 'almond',   label: 'Almond',             hex: '#E8DFC8' },
+  { value: 'brick',    label: 'Brick Red',           hex: '#A0392B' },
+  { value: 'sage',     label: 'Heritage Sage',       hex: '#7A8467' },
+  { value: 'bronze',   label: 'Bronze',              hex: '#5C4A3A' },
+  { value: 'charcoal', label: 'Charcoal Grey',       hex: '#3A3F45' },
+  { value: 'black',    label: 'Architectural Black', hex: '#1F1F1F' },
 ];
 
 const DEFAULT_ROOMS = ['Front entrance', 'Main floor', 'Master suite', 'Basement'];
@@ -73,7 +92,6 @@ function calculateUnitCost(config) {
     sum
     + optionPrice(HARDWARE_COLORS, cell.hardwareColor)
     + optionPrice(SCREEN_TYPES, cell.screenType)
-    + optionPrice(SPECIAL_GLAZING_OPTIONS, cell.specialGlazing)
     + (cell.egressHardware ? 35 : 0)
     + (cell.grillPattern !== 'none' ? 95 : 0)
     + optionPrice(GRILL_BAR_SIZES, cell.grillBarSize)
@@ -92,8 +110,9 @@ function calculateUnitCost(config) {
     + optionPrice(LOW_E_COATINGS, config.lowECoating2)
     + optionPrice(GAS_TYPES, config.gasType)
     + optionPrice(SPACER_TYPES, config.spacerType)
-    + optionPrice(TINT_FROSTING_OPTIONS, config.tintFrosting)
-    + optionPrice(SECURITY_GLASS_OPTIONS, config.securityGlass)
+    + optionPrice(TINT_OPTIONS, config.tintFrosting)
+    + optionPrice(SECURITY_GLASS_OPTIONS, config.securityGlassExterior)
+    + optionPrice(SECURITY_GLASS_OPTIONS, config.securityGlassInterior)
     + (config.addFoam ? 28 : 0)
     + (config.interiorJamb ? 45 : 0)
     + (config.interiorReturns ? 35 : 0)
@@ -121,11 +140,33 @@ function unitPrice(unit) {
    logic, and composes every child component below. */
 export default function ConfiguratorPage() {
   const { quoteId } = useParams();
-  const typeId     = 'casement';
+  const [searchParams] = useSearchParams();
+
+  // Read optional URL params from the sales picker (e.g. ?type=casement&w=30&h=60)
+  const urlType = searchParams.get('type') || 'casement';
+  const urlW    = parseFloat(searchParams.get('w')) || 0;
+  const urlH    = parseFloat(searchParams.get('h')) || 0;
+
+  const typeId     = urlType;
   const windowType = WINDOW_TYPES.find((w) => w.id === typeId);
 
   /* ─── Page state ─── */
-  const [config, setConfig]               = useState(() => createDefaultConfig(typeId));
+  const [config, setConfig]               = useState(() => {
+    const cfg = createDefaultConfig(typeId);
+    if (urlW > 0 && urlH > 0) {
+      // Skip the wizard entirely — dimensions already provided from the sales picker
+      cfg.frameWidth = urlW;
+      cfg.frameHeight = urlH;
+      cfg.wizardStep = 'done';
+      cfg.grid = {
+        verticalCount: 1,
+        horizontalCount: 1,
+        rowConfigs: buildDefaultRowConfigs(1, 1),
+        cells: buildGridCells(buildDefaultRowConfigs(1, 1), typeId, urlH),
+      };
+    }
+    return cfg;
+  });
   const [isFullscreen, setIsFullscreen]   = useState(false);
   const [isUpdating, setIsUpdating]       = useState(false);
   const [activeStep, setActiveStep]       = useState('layout');
@@ -229,8 +270,8 @@ export default function ConfiguratorPage() {
     const cell = selectedCell;
     return {
       'layout':        config.grid.verticalCount > 1 || config.grid.horizontalCount > 1,
-      'exterior':      config.exteriorColor !== 'white-137' || config.brickmould !== 'none' || config.nailingFin !== 'no' || config.addFoam,
-      'interior':      config.interiorColor !== 'white-137' || config.interiorJamb || config.interiorReturns || (cell ? (cell.egressHardware || cell.hardwareColor !== 'white-137') : false),
+      'exterior':      config.exteriorColor !== 'white' || config.brickmould !== 'none' || config.nailFin || config.addFoam || (config.glassDesign && config.glassDesign !== 'clear'),
+      'interior':      config.interiorColor !== 'white' || config.jambDepth !== 'none' || (config.interiorReturn && config.interiorReturn !== 'drywall') || config.hardwareFinish !== 'satin-nickel' || (cell ? (cell.egressHardware || cell.hardwareColor !== 'white') : false),
       'glass-options': config.glazingType === 'triple-pane' || config.lowECoating1 !== 'low-e1' || config.lowECoating2 !== 'low-e1' || config.gasType !== 'argon' || config.spacerType !== 'warm-edge',
       'glass-design':  config.tintFrosting !== 'none' || config.securityGlass !== 'none' || (cell ? (cell.grillPattern !== 'none' || cell.specialGlazing !== 'default') : false),
     };
@@ -529,6 +570,9 @@ export default function ConfiguratorPage() {
           controlsRef={controlsRef}
           selectedCell={selectedCell}
           energyRatings={energyRatings}
+          unitPrice={activeUnit ? unitPrice(activeUnit) : 0}
+          quoteTotal={quoteSubtotal + quoteTax}
+          lineCount={lines.length}
         />
 
         <div
@@ -545,14 +589,14 @@ export default function ConfiguratorPage() {
             e.preventDefault();
           }}
           onDoubleClick={() => setInspectorWidth(480)}
-          title="Drag to resize · double-click to reset"
+          title="Drag To Resize · Double-Click To Reset"
         >
           <span className={styles.colSplitterGrip} aria-hidden />
         </div>
 
         <Inspector
           windowTypeLabel={windowType.label}
-          productCode={typeId.toUpperCase()}
+          productCode="Vinyl 5000"
           activeStep={activeStep}
           onChangeStep={setActiveStep}
           tabHasCustomization={tabHasCustomization}
@@ -601,6 +645,79 @@ function Ambient() {
 }
 
 /* ────────────────────────────────────────────────────────────
+   PRICE CARD — live cost breakdown (matches OpenSpec priceCardHTML)
+   ──────────────────────────────────────────────────────────── */
+function PriceCard({ config, selectedCell }) {
+  const lines = [];
+  const areaSqFt = Math.max(1, (config.frameWidth * config.frameHeight) / 144);
+  lines.push({ label: 'Base · Window', value: 280 + Math.round(areaSqFt * 22) });
+
+  // Frame colour
+  const extColor = FRAME_COLORS.find((c) => c.value === config.exteriorColor);
+  if (extColor?.priceAddon) lines.push({ label: `Frame · ${extColor.label}`, value: extColor.priceAddon });
+
+  // Glazing
+  const glazing = GLAZING_TYPES.find((g) => g.value === config.glazingType);
+  if (glazing?.priceAddon) lines.push({ label: 'Glazing upgrade', value: glazing.priceAddon });
+
+  // Low-E
+  const loe1 = LOW_E_COATINGS.find((l) => l.value === config.lowECoating1);
+  if (loe1?.priceAddon) lines.push({ label: `Low-E · ${loe1.label}`, value: loe1.priceAddon });
+
+  // Gas
+  const gas = GAS_TYPES.find((g) => g.value === config.gasType);
+  if (gas?.priceAddon) lines.push({ label: `Gas · ${gas.label}`, value: gas.priceAddon });
+
+  // Brickmould
+  const bm = BRICKMOULD_OPTIONS.find((b) => b.value === config.brickmould);
+  if (bm?.priceAddon) lines.push({ label: `Brickmould · ${bm.label}`, value: bm.priceAddon });
+
+  // Cell options
+  if (selectedCell) {
+    const cells = config.grid.cells.length || 1;
+    if (cells > 1) lines.push({ label: `Multi-pane (${cells} cells)`, value: cells * 120 });
+    if (selectedCell.grillPattern !== 'none') lines.push({ label: 'Grilles', value: 95 });
+    if (selectedCell.egressHardware) lines.push({ label: 'Egress hardware', value: 35 });
+  }
+
+  if (config.addFoam) lines.push({ label: 'Foam-injected profile', value: 28 });
+  if (config.interiorJamb) lines.push({ label: 'Jamb extension', value: 45 });
+  if (config.interiorReturns) lines.push({ label: 'Interior return', value: 35 });
+
+  const total = lines.reduce((s, l) => s + l.value, 0);
+
+  return (
+    <div style={{
+      background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 3,
+      padding: 14, boxShadow: '0 1px 2px rgba(15,23,42,0.06), 0 4px 12px rgba(15,23,42,0.06)',
+    }}>
+      {lines.map((l, i) => (
+        <div key={i} style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '4px 0', fontSize: 12, color: '#64748B',
+        }}>
+          <span>{l.label}</span>
+          <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontVariantNumeric: 'tabular-nums', color: '#0F172A' }}>
+            {l.value > 0 ? `+$${l.value.toFixed(2)}` : `$${l.value.toFixed(2)}`}
+          </span>
+        </div>
+      ))}
+      <div style={{ height: 1, background: '#E2E8F0', margin: '8px 0' }} />
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>Unit Total</span>
+        <span style={{
+          fontFamily: "'IBM Plex Mono', monospace", fontSize: 18, fontWeight: 700,
+          color: '#2e5bc8', fontVariantNumeric: 'tabular-nums',
+        }}>
+          ${total.toLocaleString()}.00
+        </span>
+      </div>
+      <div style={{ fontSize: 11, color: '#94A3B8', marginTop: 4 }}>Updates live</div>
+    </div>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
    INSPECTOR TAB BODY — dispatches to the active tab
    ────────────────────────────────────────────────────────────
    Inspector tabs that have substantial JSX (LayoutTab, GrillesTab)
@@ -641,191 +758,456 @@ function InspectorTabBody({
   }
 
   if (activeStep === 'exterior') {
+    const extColorLabel = FRAME_COLORS.find(c => c.value === config.exteriorColor)?.label || config.exteriorColor;
+    const bmLabel = BRICKMOULD_CATALOG.find(b => b.value === (config.brickmould || 'none'))?.label || 'None';
     return (
       <>
         {selectedCell && (
-          <Group title="Window type">
+          <DetailsBox title="Window Type" chip={getWindowTypeOptions(selectedCell.windowType).find(o => o.value === selectedCell.windowType)?.label || selectedCell.windowType} defaultOpen>
             <Select
               value={selectedCell.windowType}
               options={getWindowTypeOptions(selectedCell.windowType)}
               onChange={(v) => updateCell(selectedCell.id, { windowType: v })}
               showPriceAddon={false}
             />
-          </Group>
+          </DetailsBox>
         )}
 
-        <div className={layoutStyles.groupHairline} />
-
-        <Group title="Exterior colour">
-          <Swatches value={config.exteriorColor} options={FRAME_COLOR_SWATCHES} onChange={(v) => updateConfig({ exteriorColor: v })} />
-          <Field label="Or pick from full palette">
-            <Select value={config.exteriorColor} options={FRAME_COLORS} onChange={(v) => updateConfig({ exteriorColor: v })} />
-          </Field>
-        </Group>
-
-        <div className={layoutStyles.groupHairline} />
-
-        <Group title="Brickmould & nailing fin">
-          <div className={layoutStyles.fieldGrid2}>
-            <Field label="Brickmould"><Select value={config.brickmould}  options={BRICKMOULD_OPTIONS}  onChange={(v) => updateConfig({ brickmould: v })} /></Field>
-            <Field label="Snap-in nailing fin"><Select value={config.nailingFin} options={NAILING_FIN_OPTIONS} onChange={(v) => updateConfig({ nailingFin: v })} /></Field>
+        <DetailsBox title="Exterior Colour" chip={extColorLabel} defaultOpen>
+          <Select value={config.exteriorColor} options={FRAME_COLORS} onChange={(v) => updateConfig({ exteriorColor: v })} />
+          <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+            {FRAME_COLOR_SWATCHES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => updateConfig({ exteriorColor: s.value })}
+                title={s.label}
+                style={{
+                  width: 38, height: 38, borderRadius: 10, cursor: 'pointer',
+                  background: s.hex,
+                  border: 'none',
+                  position: 'relative',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: config.exteriorColor === s.value
+                    ? '0 1px 0 rgba(255,255,255,0.7) inset, 0 -1px 0 rgba(0,0,0,0.06) inset, 0 0 0 2.5px #fff, 0 0 0 4px #2e5bc8, 0 6px 16px -2px rgba(46,91,200,0.25)'
+                    : '0 1px 0 rgba(255,255,255,0.7) inset, 0 -1px 0 rgba(0,0,0,0.06) inset, 0 0 0 1px rgba(0,0,0,0.08), 0 4px 12px -2px rgba(0,0,0,0.12)',
+                  transition: 'transform .15s, box-shadow .15s',
+                  transform: config.exteriorColor === s.value ? 'scale(1.02)' : 'none',
+                }}
+              >
+                {config.exteriorColor === s.value && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}><polyline points="20 6 9 17 4 12"/></svg>
+                )}
+              </button>
+            ))}
           </div>
-          <div className={layoutStyles.fieldRow}>
-            <span className={layoutStyles.fieldLabel}>Foam-injected profile</span>
-            <Toggle value={config.addFoam} onChange={(v) => quickUpdate({ addFoam: v })} />
+        </DetailsBox>
+
+        <DetailsBox title="Brickmold" chip={bmLabel} defaultOpen={false}>
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Profile</label>
+            <Select value={config.brickmould || 'none'} options={BRICKMOULD_CATALOG} onChange={(v) => updateConfig({ brickmould: v })} />
           </div>
-        </Group>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 2, cursor: 'pointer', marginBottom: 8 }}>
+            <input type="checkbox" checked={config.nailFin || false} onChange={(e) => quickUpdate({ nailFin: e.target.checked })} style={{ cursor: 'pointer', margin: 0 }} />
+            <label style={{ flex: 1, cursor: 'pointer', fontSize: 12, color: '#0F172A', fontWeight: 600 }}>Nail Fin</label>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: config.nailFin ? '#2651b3' : '#94A3B8', fontWeight: config.nailFin ? 600 : 400 }}>{config.nailFin ? '+$45' : 'included'}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#F8FAFC', border: '1px solid #E2E8F0', borderRadius: 2, cursor: 'pointer', marginBottom: 8 }}>
+            <input type="checkbox" checked={config.cutForSiding || false} onChange={(e) => quickUpdate({ cutForSiding: e.target.checked })} style={{ cursor: 'pointer', margin: 0 }} />
+            <label style={{ flex: 1, cursor: 'pointer', fontSize: 12, color: '#0F172A', fontWeight: 600 }}>Cut for Siding</label>
+            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 11, color: config.cutForSiding ? '#2651b3' : '#94A3B8', fontWeight: config.cutForSiding ? 600 : 400 }}>{config.cutForSiding ? '+$12' : 'included'}</span>
+          </div>
+          <div style={{ fontSize: 10.5, color: '#94A3B8', lineHeight: 1.4 }}>Adds an integral PVC nail fin (1¼″ flange) for new construction installation.</div>
+        </DetailsBox>
 
         {selectedCell && !['picture', 'high-fix', 'fixed'].includes(selectedCell.windowType) && (
-          <>
-            <div className={layoutStyles.groupHairline} />
-            <Group title="Operation & handing">
-              <Field label="Opens from">
-                <Select
-                  value={selectedCell.openingDirection}
-                  options={OPENING_DIRECTIONS}
-                  onChange={(v) => updateCell(selectedCell.id, { openingDirection: v })}
-                  showPriceAddon={false}
-                />
-              </Field>
-            </Group>
-          </>
+          <DetailsBox title="Hinge" chip={OPENING_DIRECTIONS.find(o => o.value === selectedCell.openingDirection)?.label || selectedCell.openingDirection} defaultOpen={false}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+              {OPENING_DIRECTIONS.map((d) => (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => updateCell(selectedCell.id, { openingDirection: d.value })}
+                  style={{
+                    justifyContent: 'center', padding: 8, fontSize: 11, border: 'none', borderRadius: 2, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 500,
+                    ...(selectedCell.openingDirection === d.value
+                      ? { background: '#2e5bc8', color: '#fff' }
+                      : { background: '#fff', border: '1px solid #E2E8F0', color: '#0F172A' }),
+                  }}
+                >{d.label}</button>
+              ))}
+            </div>
+          </DetailsBox>
         )}
       </>
     );
   }
 
   if (activeStep === 'interior') {
+    const intColorLabel = FRAME_COLORS.find(c => c.value === config.interiorColor)?.label || config.interiorColor;
+    const jambLabel = JAMB_DEPTH_OPTIONS.find(o => o.value === (config.jambDepth || 'none'))?.label || 'None';
+    const returnLabel = INTERIOR_RETURN_OPTIONS.find(o => o.value === (config.interiorReturn || 'drywall'))?.label || 'Drywall';
+    const hwLabel = HARDWARE_FINISHES.find(h => h.value === (config.hardwareFinish || 'satin-nickel'))?.label || 'Satin Nickel';
     return (
       <>
-        <Group title="Interior colour">
-          <Swatches value={config.interiorColor} options={FRAME_COLOR_SWATCHES} onChange={(v) => updateConfig({ interiorColor: v })} />
-          <Field label="Or pick from full palette">
-            <Select value={config.interiorColor} options={FRAME_COLORS} onChange={(v) => updateConfig({ interiorColor: v })} />
-          </Field>
-        </Group>
-
-        <div className={layoutStyles.groupHairline} />
-
-        <Group title="Jamb & interior return">
-          <div className={layoutStyles.fieldRow}>
-            <span className={layoutStyles.fieldLabel}>Jamb extension</span>
-            <Toggle value={config.interiorJamb} onChange={(v) => quickUpdate({ interiorJamb: v })} />
+        <DetailsBox title="Interior Colour" chip={intColorLabel} defaultOpen>
+          <Select value={config.interiorColor} options={FRAME_COLORS} onChange={(v) => updateConfig({ interiorColor: v })} />
+          <div style={{ display: 'flex', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+            {FRAME_COLOR_SWATCHES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => updateConfig({ interiorColor: s.value })}
+                title={s.label}
+                style={{
+                  width: 38, height: 38, borderRadius: 10, cursor: 'pointer',
+                  background: s.hex,
+                  border: 'none',
+                  position: 'relative',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  boxShadow: config.interiorColor === s.value
+                    ? '0 1px 0 rgba(255,255,255,0.7) inset, 0 -1px 0 rgba(0,0,0,0.06) inset, 0 0 0 2.5px #fff, 0 0 0 4px #2e5bc8, 0 6px 16px -2px rgba(46,91,200,0.25)'
+                    : '0 1px 0 rgba(255,255,255,0.7) inset, 0 -1px 0 rgba(0,0,0,0.06) inset, 0 0 0 1px rgba(0,0,0,0.08), 0 4px 12px -2px rgba(0,0,0,0.12)',
+                  transition: 'transform .15s, box-shadow .15s',
+                  transform: config.interiorColor === s.value ? 'scale(1.02)' : 'none',
+                }}
+              >
+                {config.interiorColor === s.value && (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}><polyline points="20 6 9 17 4 12"/></svg>
+                )}
+              </button>
+            ))}
           </div>
-          <div className={layoutStyles.fieldRow}>
-            <span className={layoutStyles.fieldLabel}>Interior return</span>
-            <Toggle value={config.interiorReturns} onChange={(v) => quickUpdate({ interiorReturns: v })} />
+        </DetailsBox>
+
+        <DetailsBox title="Jamb Extension" chip={jambLabel} chipColor="amber" defaultOpen={false}>
+          <Select value={config.jambDepth || 'none'} options={JAMB_DEPTH_OPTIONS} onChange={(v) => updateConfig({ jambDepth: v })} />
+          {config.jambDepth && config.jambDepth !== 'none' && (
+            <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 8, lineHeight: 1.4 }}>
+              {JAMB_DEPTH_OPTIONS.find(o => o.value === config.jambDepth)?.description || ''}
+            </div>
+          )}
+        </DetailsBox>
+
+        <DetailsBox title="Interior Return" chip={returnLabel} defaultOpen={false}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
+            {INTERIOR_RETURN_OPTIONS.map((r) => (
+              <button
+                key={r.value}
+                type="button"
+                onClick={() => updateConfig({ interiorReturn: r.value })}
+                style={{
+                  padding: '10px 12px', fontSize: 12, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 3, textAlign: 'left', lineHeight: 1.25, borderRadius: 2, cursor: 'pointer', fontFamily: 'inherit',
+                  ...(config.interiorReturn === r.value || (!config.interiorReturn && r.value === 'drywall')
+                    ? { background: '#2e5bc8', border: '1px solid #2651b3', color: '#fff' }
+                    : { background: '#fff', border: '1px solid #E2E8F0', color: '#0F172A' }),
+                }}
+              >
+                <span style={{ fontWeight: 700 }}>{r.label}</span>
+                <span style={{ fontSize: 10, opacity: 0.85, fontFamily: "'IBM Plex Mono', monospace" }}>{r.priceAddon > 0 ? `+$${r.priceAddon}` : 'included'}</span>
+              </button>
+            ))}
           </div>
-        </Group>
+          {config.interiorReturn && config.interiorReturn !== 'none' && (
+            <div style={{ fontSize: 10.5, color: '#94A3B8', marginTop: 10, lineHeight: 1.4 }}>
+              {INTERIOR_RETURN_OPTIONS.find(o => o.value === config.interiorReturn)?.description || ''}
+            </div>
+          )}
+        </DetailsBox>
+
+        <DetailsBox title="Hardware Option" chip={hwLabel} defaultOpen>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#0F172A', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hardware finish</div>
+            <Select value={config.hardwareFinish || 'satin-nickel'} options={HARDWARE_FINISHES} onChange={(v) => updateConfig({ hardwareFinish: v })} />
+            <div style={{ display: 'flex', gap: 12, marginTop: 8, flexWrap: 'wrap' }}>
+              {HARDWARE_FINISHES.map((h) => (
+                <button
+                  key={h.value}
+                  onClick={() => updateConfig({ hardwareFinish: h.value })}
+                  title={h.label}
+                  style={{
+                    width: 38, height: 38, borderRadius: 10, cursor: 'pointer',
+                    background: h.hex,
+                    border: 'none',
+                    position: 'relative',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    boxShadow: (config.hardwareFinish || 'satin-nickel') === h.value
+                      ? '0 1px 0 rgba(255,255,255,0.7) inset, 0 -1px 0 rgba(0,0,0,0.06) inset, 0 0 0 2.5px #fff, 0 0 0 4px #2e5bc8, 0 6px 16px -2px rgba(46,91,200,0.25)'
+                      : '0 1px 0 rgba(255,255,255,0.7) inset, 0 -1px 0 rgba(0,0,0,0.06) inset, 0 0 0 1px rgba(0,0,0,0.08), 0 4px 12px -2px rgba(0,0,0,0.12)',
+                    transition: 'transform .15s, box-shadow .15s',
+                    transform: (config.hardwareFinish || 'satin-nickel') === h.value ? 'scale(1.02)' : 'none',
+                  }}
+                >
+                  {(config.hardwareFinish || 'satin-nickel') === h.value && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))' }}><polyline points="20 6 9 17 4 12"/></svg>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {selectedCell && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#0F172A', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Hardware Type</div>
+              {['casement', 'awning'].includes(selectedCell.windowType) && (
+                <div style={{ marginBottom: 8 }}>
+                  <Select value={selectedCell.hardwareTypeStyle || 'contemporary'} options={HARDWARE_TYPE_CASEMENT} onChange={(v) => updateCell(selectedCell.id, { hardwareTypeStyle: v })} />
+                </div>
+              )}
+              {['single-slider', 'double-slider', 'single-hung', 'double-hung', 'end-vent'].includes(selectedCell.windowType) && (
+                <div style={{ marginBottom: 8 }}>
+                  <Select value={selectedCell.hardwareTypeStyle || 'standard'} options={HARDWARE_TYPE_SLIDER} onChange={(v) => updateCell(selectedCell.id, { hardwareTypeStyle: v })} />
+                </div>
+              )}
+            </div>
+          )}
+
+          {selectedCell && ['single-slider', 'double-slider'].includes(selectedCell.windowType) && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#0F172A', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.04em' }}>Night Latch</div>
+              <Select value={selectedCell.nightlatch || 'no'} options={NIGHTLATCH_OPTIONS} onChange={(v) => updateCell(selectedCell.id, { nightlatch: v })} />
+            </div>
+          )}
+
+
+        </DetailsBox>
 
         {selectedCell && (
           <>
-            <div className={layoutStyles.groupHairline} />
-            <Group title="Hardware & opening">
-              <div className={layoutStyles.fieldGrid2}>
-                <Field label="Handle & lock colour">
-                  <Select value={selectedCell.hardwareColor} options={HARDWARE_COLORS} onChange={(v) => updateCell(selectedCell.id, { hardwareColor: v })} />
-                </Field>
-                <Field label="Bug screen">
-                  <Select value={selectedCell.screenType} options={SCREEN_TYPES} onChange={(v) => updateCell(selectedCell.id, { screenType: v })} />
-                </Field>
+            <DetailsBox title="Screen & cleaning" chip={WINDOW_SCREEN_OPTIONS.find(o => o.value === (selectedCell.screenMesh || 'standard'))?.label || 'Standard'} chipColor="amber" defaultOpen={false}>
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Screen Mesh</label>
+                <Select value={selectedCell.screenMesh || 'standard'} options={WINDOW_SCREEN_OPTIONS} onChange={(v) => updateCell(selectedCell.id, { screenMesh: v })} />
               </div>
-            </Group>
-            <div className={layoutStyles.groupHairline} />
-            <Group title="Safety">
-              <div className={layoutStyles.fieldRow}>
-                <span className={layoutStyles.fieldLabel}>Egress hardware</span>
-                <Toggle value={selectedCell.egressHardware} onChange={(v) => quickUpdateCell(selectedCell.id, { egressHardware: v })} />
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Bug Screen</label>
+                <Select value={selectedCell.screenType} options={SCREEN_TYPES} onChange={(v) => updateCell(selectedCell.id, { screenType: v })} />
               </div>
-            </Group>
+              {['single-hung', 'double-hung'].includes(selectedCell.windowType) && (
+                <div style={{ marginBottom: 8 }}>
+                  <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Tilt-in cleaning</label>
+                  <Select value={selectedCell.tiltFeature || 'none'} options={TILT_FEATURE_OPTIONS} onChange={(v) => updateCell(selectedCell.id, { tiltFeature: v })} />
+                </div>
+              )}
+            </DetailsBox>
+
+            <DetailsBox title="Safety Options" chip="Defaults" chipColor="red" defaultOpen={false}>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Sash Limiter (Child Safety)</label>
+                <Select value={selectedCell.sashLimiter || 'none'} options={SASH_LIMITER_OPTIONS} onChange={(v) => updateCell(selectedCell.id, { sashLimiter: v })} />
+              </div>
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Glass Safety</label>
+                <Select value={selectedCell.temperedGlass || 'standard'} options={TEMPERED_GLASS_OPTIONS} onChange={(v) => updateCell(selectedCell.id, { temperedGlass: v })} />
+              </div>
+            </DetailsBox>
           </>
         )}
 
         {energyRatings && (
-          <>
-            <div className={layoutStyles.groupHairline} />
-            <Group title="Performance">
-              <div className={inspectorStyles.energyGrid}>
-                <EnergyCard label="U-factor" value={energyRatings.uFactorIP} />
-                <EnergyCard label="SHGC"     value={energyRatings.shgc} />
-                <EnergyCard label="VT"       value={energyRatings.vt} />
-              </div>
-            </Group>
-          </>
+          <DetailsBox title="Performance" pinned defaultOpen>
+            <div className={inspectorStyles.energyGrid}>
+              <EnergyCard label="U-factor" value={energyRatings.uFactorIP} />
+              <EnergyCard label="SHGC"     value={energyRatings.shgc} />
+              <EnergyCard label="VT"       value={energyRatings.vt} />
+            </div>
+          </DetailsBox>
         )}
+
       </>
     );
   }
 
   if (activeStep === 'glass-options') {
+    const isTriple = config.glazingType === 'triple-pane';
+    // Build the coating options for glass 2 — double pane interior glass only allows Clear or i89
+    const glass2Options = isTriple
+      ? LOW_E_COATINGS
+      : LOW_E_COATINGS.filter((c) => c.value === 'clear' || c.value === 'i89');
+    const glazingLabel = GLAZING_TYPES.find(g => g.value === config.glazingType)?.label || config.glazingType;
+    const thicknessLabel = GLASS_THICKNESS_OPTIONS.find(g => g.value === config.glassThickness)?.label || config.glassThickness;
+    const gasLabel = GAS_TYPES.find(g => g.value === config.gasType)?.label || config.gasType;
+
     return (
       <>
-        <Group title="Glazing">
-          <div className={layoutStyles.fieldGrid2}>
-            <Field label="Pane count"><Select value={config.glazingType}    options={GLAZING_TYPES}            onChange={(v) => updateConfig({ glazingType: v })} /></Field>
-            <Field label="Glass thickness"><Select value={config.glassThickness} options={GLASS_THICKNESS_OPTIONS} onChange={(v) => updateConfig({ glassThickness: v })} /></Field>
+        <DetailsBox title="Glazing Package" chip={glazingLabel} chipColor={isTriple ? 'green' : undefined} defaultOpen>
+          <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Pane Count</label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 14 }}>
+            {/* Double pane button */}
+            <button
+              type="button"
+              onClick={() => updateConfig({ glazingType: 'double-pane' })}
+              style={{
+                padding: '8px 10px', fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', lineHeight: 1.25, border: '1px solid', borderRadius: 2, cursor: 'pointer', fontFamily: 'inherit',
+                ...(config.glazingType !== 'triple-pane'
+                  ? { background: '#2e5bc8', borderColor: '#2651b3', color: 'white' }
+                  : { background: '#E8E8F5', borderColor: '#9090C0', color: '#2651b3' }),
+              }}
+            >
+              <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+                <svg width="14" height="11" viewBox="0 0 24 16" fill="none" style={{ flexShrink: 0 }}><rect x="3" y="2" width="3" height="12" fill="currentColor" opacity="0.85"/><rect x="18" y="2" width="3" height="12" fill="currentColor" opacity="0.85"/><line x1="6" y1="8" x2="18" y2="8" stroke="currentColor" strokeWidth="0.6" opacity="0.4" strokeDasharray="2 2"/></svg>
+                Double pane
+              </span>
+              <span style={{ fontSize: 9, opacity: 0.85 }}>2 panes · standard</span>
+            </button>
+            {/* Triple pane button */}
+            <button
+              type="button"
+              onClick={() => updateConfig({ glazingType: 'triple-pane' })}
+              style={{
+                padding: '8px 10px', fontSize: 11, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, textAlign: 'left', lineHeight: 1.25, border: '1px solid', borderRadius: 2, cursor: 'pointer', fontFamily: 'inherit',
+                ...(config.glazingType === 'triple-pane'
+                  ? { background: '#16A34A', borderColor: '#15803D', color: 'white' }
+                  : { background: '#F0FDF4', borderColor: '#BBF7D0', color: '#15803D' }),
+              }}
+            >
+              <span style={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap' }}>
+                <svg width="14" height="11" viewBox="0 0 24 16" fill="none" style={{ flexShrink: 0 }}><rect x="3" y="2" width="3" height="12" fill="currentColor" opacity="0.85"/><rect x="10.5" y="2" width="3" height="12" fill="currentColor" opacity="0.85"/><rect x="18" y="2" width="3" height="12" fill="currentColor" opacity="0.85"/></svg>
+                Triple pane
+              </span>
+              <span style={{ fontSize: 9, opacity: 0.85 }}>3 panes · premium</span>
+            </button>
           </div>
-        </Group>
 
-        <div className={layoutStyles.groupHairline} />
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: '#0F172A', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 8 }}>Per-glass coating</div>
 
-        <Group title="Low-E coatings">
-          <div className={layoutStyles.fieldGrid2}>
-            <Field label="Glass 1 (exterior)"><Select value={config.lowECoating1} options={LOW_E_COATINGS} onChange={(v) => updateConfig({ lowECoating1: v })} /></Field>
-            <Field label="Glass 2 (interior)"><Select value={config.lowECoating2} options={LOW_E_COATINGS} onChange={(v) => updateConfig({ lowECoating2: v })} /></Field>
+            {/* Glass 1 — Exterior */}
+            <div style={{ padding: '10px 12px', background: '#FAFBFC', border: '1px solid #E2E8F0', borderRadius: 3, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: '#0F172A' }}>Glass 1 <span style={{ fontWeight: 400, color: '#94A3B8' }}>· Exterior</span></span>
+                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 2, background: '#E8E8F5', color: '#2651b3', fontWeight: 600 }}>
+                  {LOW_E_COATINGS.find((c) => c.value === config.lowECoating1)?.label || 'Clear'}
+                </span>
+              </div>
+              <Select value={config.lowECoating1} options={LOW_E_COATINGS} onChange={(v) => updateConfig({ lowECoating1: v })} />
+            </div>
+
+            {/* Glass 2 — Interior (or Middle for triple) */}
+            <div style={{ padding: '10px 12px', background: '#FAFBFC', border: '1px solid #E2E8F0', borderRadius: 3, marginBottom: isTriple ? 8 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: '#0F172A' }}>Glass 2 <span style={{ fontWeight: 400, color: '#94A3B8' }}>· {isTriple ? 'Middle' : 'Interior'}</span></span>
+                <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 2, background: '#E8E8F5', color: '#2651b3', fontWeight: 600 }}>
+                  {LOW_E_COATINGS.find((c) => c.value === config.lowECoating2)?.label || 'Clear'}
+                </span>
+              </div>
+              <Select value={config.lowECoating2} options={glass2Options} onChange={(v) => updateConfig({ lowECoating2: v })} />
+            </div>
+
+            {/* Glass 3 — Interior (only for triple) */}
+            {isTriple && (
+              <div style={{ padding: '10px 12px', background: '#FAFBFC', border: '1px solid #E2E8F0', borderRadius: 3 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <span style={{ fontSize: 11.5, fontWeight: 600, color: '#0F172A' }}>Glass 3 <span style={{ fontWeight: 400, color: '#94A3B8' }}>· Interior</span></span>
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 2, background: '#F0FDF4', color: '#15803D', fontWeight: 600 }}>
+                    {LOW_E_COATINGS.find((c) => c.value === (config.lowECoating3 || 'clear'))?.label || 'Clear'}
+                  </span>
+                </div>
+                <Select value={config.lowECoating3 || 'clear'} options={LOW_E_COATINGS} onChange={(v) => updateConfig({ lowECoating3: v })} />
+              </div>
+            )}
           </div>
-        </Group>
+        </DetailsBox>
 
-        <div className={layoutStyles.groupHairline} />
-
-        <Group title="Spacer & gas fill">
-          <div className={layoutStyles.fieldGrid2}>
-            <Field label="Gas type"><Select value={config.gasType}     options={GAS_TYPES}     onChange={(v) => updateConfig({ gasType: v })} /></Field>
-            <Field label="Spacer type"><Select value={config.spacerType} options={SPACER_TYPES} onChange={(v) => updateConfig({ spacerType: v })} /></Field>
+        <DetailsBox title="Glass Thickness" chip={thicknessLabel} defaultOpen={false}>
+          <div>
+            <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Glass Thickness</label>
+            <Select value={config.glassThickness} options={GLASS_THICKNESS_OPTIONS} onChange={(v) => updateConfig({ glassThickness: v })} />
           </div>
-          <Field label="Spacer colour">
+        </DetailsBox>
+
+        <DetailsBox title="Security / Safety Glass" chip={SECURITY_GLASS_OPTIONS.find(o => o.value === (config.securityGlassExterior || 'none'))?.label || 'None'} defaultOpen={false}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div>
+              <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Exterior Pane</label>
+              <Select value={config.securityGlassExterior || 'none'} options={SECURITY_GLASS_OPTIONS} onChange={(v) => updateConfig({ securityGlassExterior: v })} />
+            </div>
+            <div>
+              <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Interior Pane</label>
+              <Select value={config.securityGlassInterior || 'none'} options={SECURITY_GLASS_OPTIONS} onChange={(v) => updateConfig({ securityGlassInterior: v })} />
+            </div>
+          </div>
+        </DetailsBox>
+
+        <DetailsBox title="Spacer & gas fill" chip={gasLabel} defaultOpen={false}>
+          <div style={{ marginBottom: 8 }}>
+            <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Gas Type</label>
+            <Select value={config.gasType} options={GAS_TYPES} onChange={(v) => updateConfig({ gasType: v })} />
+          </div>
+          <div style={{ marginBottom: 8 }}>
+            <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Spacer Type</label>
+            <Select value={config.spacerType} options={SPACER_TYPES} onChange={(v) => updateConfig({ spacerType: v })} />
+          </div>
+          <div>
+            <label style={{ fontSize: 11, color: '#64748B', display: 'block', marginBottom: 4 }}>Spacer Colour</label>
             <Select value={config.spacerColor} options={SPACER_COLOR_OPTIONS} onChange={(v) => updateConfig({ spacerColor: v })} showPriceAddon={false} />
-          </Field>
-        </Group>
+          </div>
+        </DetailsBox>
       </>
     );
   }
 
   if (activeStep === 'glass-design') {
+    const designLabel = GLASS_DESIGN_OPTIONS.find(o => o.value === (config.glassDesign || 'clear'))?.label || 'Clear';
     return (
       <>
-        <Group title="Tint & security">
-          <div className={layoutStyles.fieldGrid2}>
-            <Field label="Tint or frosting"><Select value={config.tintFrosting}  options={TINT_FROSTING_OPTIONS}  onChange={(v) => updateConfig({ tintFrosting: v })} /></Field>
-            <Field label="Security glass"><Select value={config.securityGlass} options={SECURITY_GLASS_OPTIONS} onChange={(v) => updateConfig({ securityGlass: v })} /></Field>
+        <DetailsBox title="Frosted Glass" chip={FROSTED_GLASS_OPTIONS.find(o => o.value === (config.frostedGlass || 'clear'))?.label || 'Clear'} defaultOpen>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, padding: 2 }}>
+            {FROSTED_GLASS_OPTIONS.map((d) => {
+              const sel = (config.frostedGlass || 'clear') === d.value;
+              /* SVG pattern overlay per type */
+              const patternSvg = {
+                clear: '',
+                sandblasted: `<defs><pattern id="p_sb" width="3" height="3" patternUnits="userSpaceOnUse"><circle cx="1.5" cy="1.5" r="0.6" fill="#0F172A" opacity="0.18"/></pattern></defs><rect x="2" y="2" width="76" height="76" fill="url(#p_sb)" opacity="0.6"/>`,
+                rain: `<defs><pattern id="p_rain" width="6" height="12" patternUnits="userSpaceOnUse"><line x1="3" y1="0" x2="3" y2="12" stroke="#0F172A" stroke-width="0.6" opacity="0.12"/></pattern></defs><rect x="2" y="2" width="76" height="76" fill="url(#p_rain)" opacity="0.8"/>`,
+                'glue-chip': `<defs><pattern id="p_gc" width="10" height="10" patternUnits="userSpaceOnUse"><polygon points="5,1 8,4 6,8 2,6 3,3" fill="#0F172A" opacity="0.08" stroke="#0F172A" stroke-width="0.3" stroke-opacity="0.12"/></pattern></defs><rect x="2" y="2" width="76" height="76" fill="url(#p_gc)" opacity="0.9"/>`,
+              };
+              return (
+                <button
+                  key={d.value}
+                  type="button"
+                  onClick={() => updateConfig({ frostedGlass: d.value })}
+                  title={d.label}
+                  style={{
+                    position: 'relative', padding: '8px 6px', border: sel ? '2px solid #2e5bc8' : '1px solid #E2E8F0', background: sel ? '#EAEAF2' : '#FFFFFF', borderRadius: 2, cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, fontFamily: 'inherit', fontSize: 11, color: '#0F172A', textAlign: 'center', lineHeight: 1.25, transition: 'border-color 120ms ease, background 120ms ease',
+                  }}
+                >
+                  {sel && (
+                    <div style={{ position: 'absolute', top: 6, right: 6, width: 18, height: 18, borderRadius: '50%', background: '#0F172A', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
+                      <svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 5 L4.2 7.2 L8 3" stroke="#FFFFFF" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    </div>
+                  )}
+                  <div style={{ width: 74, height: 74, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 3, overflow: 'hidden', background: '#F0F4F8' }}>
+                    <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" style={{ display: 'block', width: '100%', height: '100%' }}>
+                      <defs>
+                        <linearGradient id={`frostSheen_${d.value}`} x1="0" y1="0" x2="0.2" y2="1"><stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.45"/><stop offset="55%" stopColor="#FFFFFF" stopOpacity="0.10"/><stop offset="100%" stopColor="#0F172A" stopOpacity="0.06"/></linearGradient>
+                      </defs>
+                      <rect x="0" y="0" width="80" height="80" fill="#F0F4F8"/>
+                      <rect x="0" y="0" width="80" height="80" fill={`url(#frostSheen_${d.value})`}/>
+                      <g dangerouslySetInnerHTML={{ __html: patternSvg[d.value] || '' }} />
+                      <rect x="0.5" y="0.5" width="79" height="79" fill="none" stroke="#0F172A" strokeWidth="0.6" opacity="0.25" rx="1"/>
+                    </svg>
+                  </div>
+                  <span style={{ fontWeight: 500, minHeight: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>{d.label}</span>
+                  <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: 9, color: '#94A3B8' }}>{d.priceAddon > 0 ? `+$${d.priceAddon}` : 'included'}</span>
+                </button>
+              );
+            })}
           </div>
-        </Group>
+        </DetailsBox>
+
+        <DetailsBox title="Tint" chip={TINT_OPTIONS.find(o => o.value === (config.tintFrosting || 'none'))?.label || 'None'} defaultOpen={false}>
+          <Select value={config.tintFrosting || 'none'} options={TINT_OPTIONS} onChange={(v) => updateConfig({ tintFrosting: v })} />
+        </DetailsBox>
 
         {selectedCell && (
-          <>
-            <div className={layoutStyles.groupHairline} />
-            <Group title="Special glazing">
-              <Field label="Apply to selected cell">
-                <Select
-                  value={selectedCell.specialGlazing}
-                  options={SPECIAL_GLAZING_OPTIONS}
-                  onChange={(v) => updateCell(selectedCell.id, { specialGlazing: v })}
-                />
-              </Field>
-            </Group>
-          </>
-        )}
-
-        {selectedCell && (
-          <>
-            <div className={layoutStyles.groupHairline} />
-            <GrillesTab
-              cell={selectedCell}
-              config={config}
-              onUpdateCell={(u) => updateCell(selectedCell.id, u)}
-              onQuickUpdateCell={(u) => quickUpdateCell(selectedCell.id, u)}
-            />
-          </>
+          <GrillesTab
+            cell={selectedCell}
+            config={config}
+            onUpdateCell={(u) => updateCell(selectedCell.id, u)}
+            onQuickUpdateCell={(u) => quickUpdateCell(selectedCell.id, u)}
+          />
         )}
       </>
     );

@@ -1,0 +1,12 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/login.html", "destination": "/login.html" },
+    { "source": "/sales.html", "destination": "/sales.html" },
+    { "source": "/factory.html", "destination": "/factory.html" },
+    { "source": "/master-login.html", "destination": "/master-login.html" },
+    { "source": "/landing.html", "destination": "/landing.html" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
+}

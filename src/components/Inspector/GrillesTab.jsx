@@ -1,6 +1,7 @@
 import {
   Field,
   Group,
+  DetailsBox,
   Select,
   Stepper,
   Toggle,
@@ -12,6 +13,7 @@ import {
   GRILL_PATTERNS,
   GRILL_BAR_TYPES,
   GRILL_BAR_SIZES,
+  GRILL_BAR_SIZES_BY_TYPE,
   GRILL_COLORS,
   PRAIRIE_H_BAR_LAYOUTS,
   PRAIRIE_V_BAR_LAYOUTS,
@@ -51,7 +53,7 @@ export function GrillesTab({ cell, config, onUpdateCell, onQuickUpdateCell }) {
 
       {enabled && (
         <>
-          <Group title="Pattern">
+          <DetailsBox title="Pattern" chip={cell.grillPattern} defaultOpen>
             <div className={`${styles.tiles} ${styles.tilesCol4}`}>
               {GRILL_PATTERNS.filter((p) => p.value !== 'none').map((p) => (
                 <button
@@ -83,27 +85,33 @@ export function GrillesTab({ cell, config, onUpdateCell, onQuickUpdateCell }) {
                 </button>
               ))}
             </div>
-          </Group>
+          </DetailsBox>
 
-          <Group title="Bar profile">
+          <DetailsBox title="Grill Type" chip={cell.grillBarType} defaultOpen>
             <div className={`${styles.tiles} ${styles.tilesCol4}`}>
               {GRILL_BAR_TYPES.map((bt) => (
                 <button
                   key={bt.value}
                   type="button"
                   className={`${styles.tile} ${cell.grillBarType === bt.value ? styles.tileActive : ''}`}
-                  onClick={() => onUpdateCell({ grillBarType: bt.value })}
+                  onClick={() => {
+                    const sizes = GRILL_BAR_SIZES_BY_TYPE[bt.value] || GRILL_BAR_SIZES;
+                    const currentValid = sizes.find(s => s.value === cell.grillBarSize);
+                    const updates = { grillBarType: bt.value };
+                    if (!currentValid) updates.grillBarSize = sizes[0]?.value || '5/16';
+                    onUpdateCell(updates);
+                  }}
                 >
                   <span className={styles.tileIcon}><GrillBarTypeIcon barType={bt.value} /></span>
                   <span>{bt.label}</span>
                 </button>
               ))}
             </div>
-          </Group>
+          </DetailsBox>
 
-          <Group title="Bar size">
+          <DetailsBox title="Bar Size" chip={cell.grillBarSize} defaultOpen>
             <div className={`${styles.tiles} ${styles.tilesCol3}`}>
-              {GRILL_BAR_SIZES.map((sz) => (
+              {(GRILL_BAR_SIZES_BY_TYPE[cell.grillBarType] || GRILL_BAR_SIZES).map((sz) => (
                 <button
                   key={sz.value}
                   type="button"
@@ -111,20 +119,17 @@ export function GrillesTab({ cell, config, onUpdateCell, onQuickUpdateCell }) {
                   onClick={() => onUpdateCell({ grillBarSize: sz.value })}
                 >
                   <span style={{ fontSize: 15, fontWeight: 700, fontFeatureSettings: '"tnum"' }}>{sz.label}</span>
-                  {sz.priceAddon
-                    ? <span className={styles.tilePrice}>+${sz.priceAddon.toFixed(2)}</span>
-                    : <span className={styles.tilePrice}>included</span>}
                 </button>
               ))}
             </div>
-          </Group>
+          </DetailsBox>
 
-          <Field label="Grille colour">
+          <Field label="Grille Colour">
             <Select value={cell.grillColor} options={GRILL_COLORS} onChange={(v) => onUpdateCell({ grillColor: v })} />
           </Field>
 
           {(cell.grillPattern === 'colonial' || cell.grillPattern === 'ladder' || cell.grillPattern === 'diamond') && (
-            <Group title={cell.grillPattern === 'diamond' ? 'Points' : 'Lines'}>
+            <DetailsBox title={cell.grillPattern === 'diamond' ? 'Points' : 'Lines'} defaultOpen>
               <div className={layoutStyles.fieldGrid2}>
                 <Field label={cell.grillPattern === 'diamond' ? 'Horizontal points' : 'Horizontal lines'}>
                   <Stepper value={cell.grillHorizontal} onChange={(v) => onQuickUpdateCell({ grillHorizontal: v })} min={1} max={10} />
@@ -134,19 +139,19 @@ export function GrillesTab({ cell, config, onUpdateCell, onQuickUpdateCell }) {
                 </Field>
               </div>
               {cell.grillPattern === 'ladder' && (
-                <Field label="Bar spacing">
+                <Field label="Bar Spacing">
                   <Stepper value={cell.ladderBarSpacing || 16} onChange={(v) => onQuickUpdateCell({ ladderBarSpacing: v })} min={4} max={40} unit="in" />
                 </Field>
               )}
-            </Group>
+            </DetailsBox>
           )}
 
           {cell.grillPattern === 'prairie' && (
-            <Group title="Prairie configuration">
-              <Field label="Horizontal bar layout">
+            <DetailsBox title="Prairie Configuration" defaultOpen={false}>
+              <Field label="Horizontal Bar Layout">
                 <Select value={cell.prairieHBarLayout || ''} options={PRAIRIE_H_BAR_LAYOUTS} onChange={(v) => onUpdateCell({ prairieHBarLayout: v })} />
               </Field>
-              <Field label="Vertical bar layout">
+              <Field label="Vertical Bar Layout">
                 <Select value={cell.prairieVBarLayout || ''} options={PRAIRIE_V_BAR_LAYOUTS} onChange={(v) => onUpdateCell({ prairieVBarLayout: v })} />
               </Field>
               <div className={layoutStyles.fieldGrid2}>
@@ -158,14 +163,14 @@ export function GrillesTab({ cell, config, onUpdateCell, onQuickUpdateCell }) {
                 <Field label="V bar daylight"><Stepper value={cell.prairieVBarDaylight || 5} onChange={(v) => onQuickUpdateCell({ prairieVBarDaylight: v })} min={1} max={20} step={0.5} unit="in" decimals={1} /></Field>
               </div>
               <div className={layoutStyles.fieldGrid2}>
-                <Field label="Ladder count head"><Stepper value={cell.prairieLadderHead || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderHead: v })} min={0} max={10} /></Field>
-                <Field label="Ladder count sill"><Stepper value={cell.prairieLadderSill || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderSill: v })} min={0} max={10} /></Field>
+                <Field label="Ladder Count Head"><Stepper value={cell.prairieLadderHead || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderHead: v })} min={0} max={10} /></Field>
+                <Field label="Ladder Count Sill"><Stepper value={cell.prairieLadderSill || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderSill: v })} min={0} max={10} /></Field>
               </div>
               <div className={layoutStyles.fieldGrid2}>
-                <Field label="Ladder count left"><Stepper value={cell.prairieLadderLeft || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderLeft: v })} min={0} max={10} /></Field>
-                <Field label="Ladder count right"><Stepper value={cell.prairieLadderRight || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderRight: v })} min={0} max={10} /></Field>
+                <Field label="Ladder Count Left"><Stepper value={cell.prairieLadderLeft || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderLeft: v })} min={0} max={10} /></Field>
+                <Field label="Ladder Count Right"><Stepper value={cell.prairieLadderRight || 0} onChange={(v) => onQuickUpdateCell({ prairieLadderRight: v })} min={0} max={10} /></Field>
               </div>
-            </Group>
+            </DetailsBox>
           )}
         </>
       )}

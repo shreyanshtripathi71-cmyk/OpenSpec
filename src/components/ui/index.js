@@ -5,4 +5,4 @@ export { Select } from './Select';
 export { Stepper } from './Stepper';
 export { Toggle } from './Toggle';
 export { Swatches } from './Swatches';
-export { Field, Group, layoutStyles } from './Layout';
+export { Field, Group, DetailsBox, layoutStyles } from './Layout';

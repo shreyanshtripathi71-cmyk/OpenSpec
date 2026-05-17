@@ -33,7 +33,7 @@ export function Footer({ quoteTotal, lineCount, onSubmit }) {
           </svg>
           Export PDF
         </button>
-        <button className={`${styles.osFootBtn} ${styles.osFootBtnEmail}`} type="button" title="Email quote">
+        <button className={`${styles.osFootBtn} ${styles.osFootBtnEmail}`} type="button" title="Email Quote">
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M2 4h12v8H2zM2 4l6 5 6-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>

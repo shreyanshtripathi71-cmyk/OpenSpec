@@ -1,11 +1,8 @@
-/* Tiny layout primitives shared by every inspector tab: a labelled
-   `<Field>` (label above input) and a grouped `<Group>` section
-   header. Together they account for ~60% of every inspector tab's
-   structure, so they live in `ui/` rather than per-tab modules. */
+/* Layout primitives — OpenSpec v23.4 enterprise style */
 
 .group {
   flex-direction: column;
-  gap: 11px;
+  gap: 10px;
   display: flex;
 }
 
@@ -18,32 +15,32 @@
 }
 
 .groupTitle {
-  letter-spacing: .1em;
+  letter-spacing: .04em;
   text-transform: uppercase;
-  color: var(--ink-mute);
+  color: #64748B;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .groupHairline {
-  background: var(--hairline-soft);
+  background: #E2E8F0;
   height: 1px;
-  margin: 0;
+  margin: 12px 0;
 }
 
 .field {
   flex-direction: column;
-  gap: 7px;
+  gap: 4px;
   display: flex;
 }
 
 .fieldLabel {
-  color: var(--ink-2);
-  letter-spacing: -.005em;
+  color: #64748B;
+  letter-spacing: 0;
   align-items: center;
   gap: 5px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 500;
   display: inline-flex;
 }
 
@@ -51,12 +48,139 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 4px 0;
+  padding: 6px 0;
   display: flex;
 }
 
 .fieldGrid2 {
   grid-template-columns: 1fr 1fr;
-  gap: 11px;
+  gap: 10px;
   display: grid;
+}
+
+/* ════════════════════════════════════════════════════════════
+   DetailsBox — collapsible white card
+   ════════════════════════════════════════════════════════════
+   Pixel-exact match to the legacy OpenSpec v23.4 HTML
+   configurator's <details> cards inside #exteriorPanel and
+   #interiorPanel. Every value below is copied verbatim. */
+
+.detailsBox {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 2px;
+  margin-bottom: 10px;
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 4px 12px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  transition: border-color .2s, background .2s, box-shadow .2s, transform .15s;
+  flex-shrink: 0;
+}
+.detailsBox:hover {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 8px 20px rgba(15, 23, 42, 0.10);
+  border-color: #CBD5E1;
+}
+.detailsBox[open] {
+  box-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.08),
+    0 6px 16px rgba(15, 23, 42, 0.09);
+  border-color: #CBD5E1;
+}
+
+/* ── Summary row ── */
+.detailsSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  border: none;
+}
+.detailsSummary::-webkit-details-marker {
+  display: none;
+}
+
+/* Chevron arrow — exact copy from legacy:
+   details summary::after */
+.detailsSummary::after {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid #94A3B8;
+  border-bottom: 1.5px solid #94A3B8;
+  transform: rotate(45deg);
+  margin-left: auto;
+  transition: transform .15s;
+}
+.detailsBox[open] > .detailsSummary::after {
+  transform: rotate(-135deg);
+}
+
+/* Pinned — no arrow, no pointer (matches legacy
+   details[data-pinned="true"]) */
+.detailsBox[data-pinned="true"] > .detailsSummary::after {
+  display: none;
+}
+.detailsBox[data-pinned="true"] > .detailsSummary {
+  cursor: default;
+}
+
+/* ── Title text — matches legacy inline:
+   font-size:13px;font-weight:600;white-space:nowrap ── */
+.detailsTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0F172A;
+  white-space: nowrap;
+}
+
+/* ── Chip badge — exact copy of legacy .chip + .chip-blue ──
+   .chip { display:inline-flex;align-items:center;gap:5px;
+           padding:3px 8px;border-radius:3px;font-size:11px;
+           font-weight:500;background:#F1F5F9;color:#475569;
+           margin-left:8px;white-space:nowrap }
+   .chip-blue { background:#EFF6FF;color:#2651b3 }               */
+.detailsChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #EFF6FF;
+  color: #2651b3;
+  margin-left: 8px;
+  white-space: nowrap;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.detailsChipAmber {
+  composes: detailsChip;
+  background: #FEF3C7;
+  color: #92400E;
+}
+.detailsChipGreen {
+  composes: detailsChip;
+  background: #F0FDF4;
+  color: #15803D;
+}
+.detailsChipRed {
+  composes: detailsChip;
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+/* ── Body — matches legacy
+   #exteriorPanel details > div:not(.opt-body) {padding:0 14px 14px !important}
+   #exteriorPanel details > .opt-body            {padding:0 14px 14px}           ── */
+.detailsBody {
+  padding: 0 14px 14px;
 }

@@ -1,19 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════
-   CONFIGURATOR PAGE SHELL
+   CONFIGURATOR PAGE SHELL — OpenSpec v23.4 enterprise style
    ═══════════════════════════════════════════════════════════════
-   Just the top-level page chrome — root wrapper, the static page
-   background (mesh gradient + dotted noise), ambient decorative
-   blobs, the 3-column grid that hosts ProjectTree / Viewer /
-   Inspector, and the drag splitter between viewer and inspector.
-
-   Every other surface (OsNav, Breadcrumb, Viewer, Inspector,
-   Footer, etc.) owns its own *.module.css next to its JSX. */
+   Flat background, tight spacing, no ambient blobs.
+   3-column grid: ProjectTree / Viewer / Inspector. */
 
 .scope {
-  background: transparent;
-  color: var(--ink);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
-  font-feature-settings: "cv11", "ss01", "ss03";
+  background: #FAFBFC;
+  color: #0F172A;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   letter-spacing: -0.011em;
   height: 100vh;
   overflow: hidden;
@@ -22,128 +16,63 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 18px 24px 22px;
+  gap: 0;
+  padding: 0;
   -webkit-font-smoothing: antialiased;
   isolation: isolate;
 }
 
-/* ── Page background: pastel mesh gradient + dotted noise overlay.
-   Painted on the root wrapper's pseudo-elements so it never has to
-   be re-painted as components mount / unmount. ── */
+/* ── Flat page background — no mesh gradient, just a clean slate ── */
 .scope::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  background:
-    radial-gradient(1200px 800px at 15% 0%, #f4f5f7 0%, transparent 60%),
-    radial-gradient(1000px 700px at 100% 100%, #e6e8ec 0%, transparent 55%),
-    linear-gradient(180deg, #eef0f3 0%, #e4e6ea 100%);
+  background: #FAFBFC;
 }
 .scope::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.06;
-  background-image: radial-gradient(rgba(15, 23, 42, 0.04) 1px, transparent 1px);
-  background-size: 3px 3px;
+  display: none;
 }
 
-/* ── Ambient decorative blobs ──
-   Static (NOT animated). Live behind every glass surface and
-   provide the subtle pastel "Apple Liquid Glass" colour wash using
-   regular radial gradients only. */
-.ambient {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.blob {
-  position: absolute;
-  border-radius: 50%;
-  contain: layout style paint;
-}
-.blob1 {
-  width: 560px; height: 560px;
-  left: -140px; top: -160px;
-  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.90) 0%, transparent 65%);
-  opacity: 0.55;
-}
-.blob2 {
-  width: 660px; height: 660px;
-  right: -200px; top: 80px;
-  background: radial-gradient(circle at 50% 50%, rgba(220, 222, 228, 0.70) 0%, transparent 65%);
-  opacity: 0.45;
-}
-.blob3 {
-  width: 500px; height: 500px;
-  left: 30%; bottom: -200px;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.80) 0%, transparent 65%);
-  opacity: 0.45;
-}
-.blob4 {
-  width: 420px; height: 420px;
-  right: 18%; top: 38%;
-  background: radial-gradient(circle at 50% 50%, rgba(210, 213, 220, 0.60) 0%, transparent 65%);
-  opacity: 0.35;
-}
-/* Hide the two larger blobs on small / coarse-pointer screens to keep
-   the background cheap on mobile GPUs. */
-@media (max-width: 760px), (hover: none) and (pointer: coarse) {
-  .blob3, .blob4 { display: none; }
-}
+/* ── Ambient blobs — hidden in enterprise mode ── */
+.ambient { display: none; }
+.blob { display: none; }
+.blob1, .blob2, .blob3, .blob4 { display: none; }
 
-/* ── Main 3-column grid ──
-   project tree (left) · viewer (center) · splitter · inspector (right)
-   The splitter occupies a fixed 14 px lane; the page sets
-   `--inspector-w` inline so the inspector can be drag-resized.
-   Row template is explicitly `minmax(0, 1fr)` so the inspector's
-   own nested grid (`auto auto 1fr auto`) has a definite height to
-   distribute — otherwise its `1fr` row collapses to its content. */
+/* ── Main 3-column grid ── */
 .app {
   position: relative;
   z-index: 1;
   display: grid;
   grid-template-columns:
     64px                 /* collapsed project-tree strip */
-    14px                 /* gutter */
+    8px                  /* gutter */
     minmax(0, 1fr)       /* viewer */
-    14px                 /* draggable splitter */
+    8px                  /* draggable splitter */
     var(--inspector-w, 480px);   /* inspector (drag-resizable) */
   grid-template-rows: minmax(0, 1fr);
   gap: 0;
   flex: 1;
   min-height: 0;
-  padding: 8px 10px 10px;
+  padding: 8px;
 }
 .appTreeOpen {
-  /* The project tree now expands as a compositor-layer overlay, so
-     pinning it should not resize the workspace grid. Resizing this
-     grid was the main source of the laggy open animation. */
   grid-template-columns:
-    64px
-    14px
+    280px
+    8px
     minmax(0, 1fr)
-    14px
+    8px
     var(--inspector-w, 480px);
 }
 
-/* Place children in the correct grid columns. The child components
-   target these by their global slot, not by their internal class. */
+/* Place children in the correct grid columns. */
 .app > :nth-child(1) { grid-column: 1; }  /* ProjectTree */
 .app > :nth-child(2) { grid-column: 3; }  /* Viewer */
 .app > :nth-child(3) { grid-column: 4; }  /* Splitter */
 .app > :nth-child(4) { grid-column: 5; }  /* Inspector */
 
 @media (max-width: 1100px) {
-  /* On narrower screens, hide the tree + splitter and collapse to
-     viewer + inspector. */
   .app, .appTreeOpen {
     grid-template-columns: minmax(0, 1fr) var(--inspector-w, 460px);
   }
@@ -173,11 +102,11 @@
   left: 0;
   right: 0;
   background: transparent;
-  border-radius: 4px;
+  border-radius: 2px;
   transition: background .18s;
 }
 .colSplitter:hover::before {
-  background: rgba(255, 255, 255, 0.30);
+  background: rgba(15, 23, 42, 0.08);
 }
 .colSplitterGrip {
   position: absolute;
@@ -187,7 +116,7 @@
   width: 3px;
   height: 22px;
   border-radius: 2px;
-  background: rgba(15, 23, 42, 0.15);
+  background: rgba(15, 23, 42, 0.20);
   opacity: 0;
   transition: opacity .22s;
 }

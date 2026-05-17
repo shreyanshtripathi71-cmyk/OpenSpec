@@ -1,29 +1,28 @@
+/* Toggle — OpenSpec v23.4 enterprise style */
 .toggle {
   cursor: pointer;
   width: 38px;
-  height: 23px;
-  transition: background var(--t-base);
-  background: rgba(15, 23, 42, 0.18);
+  height: 22px;
+  transition: background 0.2s;
+  background: #CBD5E1;
   border: none;
-  border-radius: 12px;
+  border-radius: 3px;
   flex-shrink: 0;
   padding: 0;
   position: relative;
-  box-shadow: inset 0 1px 1px rgba(15, 23, 42, 0.06);
 }
 .toggleDot {
-  width: 19px;
-  height: 19px;
-  transition: left var(--t-base);
-  background: #fff;
-  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  transition: left 0.2s;
+  background: #FFFFFF;
+  border-radius: 3px;
   position: absolute;
   top: 2px;
   left: 2px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18), 0 1px 1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 .toggleOn {
-  background: linear-gradient(#1f1f25, #09090b);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.30);
+  background: #3568d6;
 }
-.toggleOn .toggleDot { left: 17px; }
+.toggleOn .toggleDot { left: 18px; }

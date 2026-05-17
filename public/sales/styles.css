@@ -1,0 +1,1007 @@
+/* ================================================================
+   OpenSpec — Sales Rep Portal Styles
+   Design System: Enterprise Flat, Sharp Corners, Blue Accent (#2e5bc8)
+   Typography: Inter (UI) + IBM Plex Mono (data/mono)
+   
+   React Component Mapping:
+   - App shell (nav + sidebar)    → <SalesShell />
+   - Dashboard                    → <SalesDashboard /> (KPIs + recent activity)
+   - Quotes list                  → <QuotesList /> + <QuoteRow />
+   - Configurator                 → <ConfiguratorPage /> (already in React!)
+   - Orders view                  → <OrdersView /> + <OrderRow />
+   - Customers                    → <CustomersList />
+   - Calendar                     → <CalendarView />
+   - Commissions                  → <CommissionsView />
+   - Catalog management           → <CatalogView />
+   - Settings                     → <SalesSettings />
+   
+   Key Design Tokens:
+   --accent: #2e5bc8 (enterprise blue)
+   --accent-hover: #2651b3
+   --accent-light: #F0F6FF
+   --accent-selected: #eaeaf2
+   --text: #0F172A
+   --text-mute: #64748B
+   --text-faint: #94A3B8
+   --border: #E2E8F0
+   --surface: #FFFFFF
+   --body-bg: #FAFBFC
+   --success: #16A34A
+   --danger: #DC2626
+   --mono-font: 'IBM Plex Mono', monospace
+   ================================================================ */
+
+/* ── Main Styles ── */
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;overflow:hidden;font-family:'Inter',system-ui,-apple-system,sans-serif;color:#0F172A;background:#FAFBFC;font-feature-settings:"cv02","cv03","cv04","cv11"}
+.mono{font-family:"IBM Plex Mono","SF Mono",Menlo,monospace;font-variant-numeric:tabular-nums}
+.app{display:flex;flex-direction:column;width:100vw;height:100vh;overflow:hidden;position:relative}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:2px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .15s;font-family:inherit;background:transparent;white-space:nowrap}
+.btn-primary{background:#2e5bc8;color:#fff;border-color:#2e5bc8}
+.btn-primary:hover{background:#2651b3}
+.btn-secondary{background:#fff;color:#0F172A;border-color:#CBD5E1}
+.btn-secondary:hover{background:#F8FAFC;border-color:#94A3B8}
+.btn-ghost{color:#475569}
+.btn-ghost:hover{background:#F1F5F9;color:#0F172A}
+.btn-nav{padding:9px 16px;font-size:14.5px;font-weight:500;letter-spacing:-.005em}
+.input{width:100%;padding:7px 10px;font-size:13px;border:1px solid #CBD5E1;border-radius:2px;font-family:inherit;background:#fff;color:#0F172A}
+.input:focus{outline:none;border-color:#2e5bc8;box-shadow:0 0 0 3px #d6dff4}
+.select{width:100%;padding:7px 28px 7px 10px;font-size:13px;border:1px solid #CBD5E1;border-radius:2px;font-family:inherit;background:#fff url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2364748B' stroke-width='1.5' fill='none'/></svg>") no-repeat right 10px center;color:#0F172A;appearance:none;cursor:pointer}
+.select:focus{outline:none;border-color:#2e5bc8;box-shadow:0 0 0 3px #d6dff4}
+.label{font-size:11px;color:#64748B;display:block;margin-bottom:4px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:3px;font-size:11px;font-weight:500;background:#F1F5F9;color:#475569;margin-left:8px;white-space:nowrap}
+.chip-blue{background:#eaeaf2;color:#2651b3}
+.chip-green{background:#F0FDF4;color:#15803D}
+.tab{padding:14px 4px;font-size:13px;font-weight:500;color:#64748B;border-bottom:2px solid transparent;cursor:pointer;background:transparent;border-left:none;border-right:none;border-top:none;font-family:inherit}
+.tab.active{color:#2e5bc8;border-bottom-color:#2e5bc8}
+.stage{display:flex;align-items:center;gap:8px;font-size:13px;color:#94A3B8;cursor:pointer;background:transparent;border:none;font-family:inherit;padding:0}
+.stage.active{color:#2e5bc8} .stage.done{color:#0F172A}
+.stage-num{width:22px;height:22px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;border:1.5px solid currentColor}
+.stage.active .stage-num{background:#2e5bc8;color:#fff;border-color:#2e5bc8}
+.stage.done .stage-num{background:#2e5bc8;color:#fff;border-color:#2e5bc8}
+.divider{height:1px;background:#E2E8F0;margin:12px 0}
+.pulse{display:inline-block;width:6px;height:6px;border-radius:3px;background:#10B981;animation:p 2s ease-in-out infinite}
+@keyframes p{0%,100%{box-shadow:0 0 0 0 rgba(16,185,129,.5)}50%{box-shadow:0 0 0 6px rgba(16,185,129,0)}}
+@keyframes f{0%{background:#d6dff4}100%{background:transparent}}
+.flash{animation:f .4s ease-out}
+.swatch{width:30px;height:30px;border-radius:2px;border:1px solid #CBD5E1;cursor:pointer;transition:transform .15s}
+.swatch:hover{transform:scale(1.1)}
+.swatch.selected{box-shadow:0 0 0 2px #fff,0 0 0 4px #2e5bc8}
+.tb{padding:7px;border-radius:2px;cursor:pointer;color:#64748B;background:transparent;border:none;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:inherit;font-size:12px;font-weight:500;gap:4px}
+.tb:hover{background:#F1F5F9;color:#0F172A}
+.tb.active{background:#eaeaf2;color:#2e5bc8}
+details summary{list-style:none;cursor:pointer}
+details summary::-webkit-details-marker{display:none}
+details summary::after{content:"";display:inline-block;width:8px;height:8px;border-right:1.5px solid #94A3B8;border-bottom:1.5px solid #94A3B8;transform:rotate(45deg);margin-left:auto;transition:transform .15s}
+details[open] summary::after{transform:rotate(-135deg)}
+/* Pinned sections (Dimensions) — hide chevron and disable hover cursor on summary */
+details[data-pinned="true"] > summary::after{display:none}
+details[data-pinned="true"] > summary{cursor:default}
+.seg{display:flex;gap:2px;background:#F1F5F9;padding:3px;border-radius:3px}
+.seg button{padding:6px 14px;font-size:12px;font-weight:500;border-radius:2px;border:none;background:transparent;cursor:pointer;color:#64748B;font-family:inherit}
+.seg button.active{background:#fff;color:#2e5bc8;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+/* Unit list — compact card style. The card contains everything (drag handle,
+   icon, info, price, actions) so it reads as a single object per unit. */
+.unit-row{padding:6px 7px;border-radius:2px;border:1px solid #E5E7EB;background:#fff;width:100%;display:flex;align-items:center;gap:6px;cursor:pointer;font-family:inherit;text-align:left;color:inherit;box-shadow:0 1px 2px rgba(15,23,42,0.05),0 2px 6px rgba(15,23,42,0.04);transition:border-color .15s,box-shadow .15s,background .15s,transform .12s}
+.unit-row:hover:not(.active){border-color:#CBD5E1;box-shadow:0 1px 2px rgba(15,23,42,0.07),0 4px 10px rgba(15,23,42,0.08)}
+.unit-row.active{border-color:#2e5bc8;background:#eaeaf2;box-shadow:0 0 0 2px rgba(37,99,235,0.12),0 2px 6px rgba(37,99,235,0.10),0 6px 14px rgba(37,99,235,0.08)}
+/* Action icons (pencil + trash) inside the card — hidden by default to keep
+   the row compact, revealed on hover or when the row is active. */
+.unit-row [data-unit-actions]{opacity:0;transition:opacity .15s}
+.unit-row:hover [data-unit-actions],
+.unit-row.active [data-unit-actions]{opacity:1}
+.cad-hotspot.cad-selected > rect:first-of-type,
+.cad-hotspot.cad-selected > path:first-of-type{filter:drop-shadow(0 0 0 #2e5bc8)}
+.cad-hotspot.cad-selected{outline:none}
+.cad-hotspot.cad-add > rect{opacity:0.35;transition:opacity .18s,fill .18s}
+.cad-hotspot.cad-add > text{opacity:0.70;transition:opacity .18s}
+svg:hover .cad-hotspot.cad-add > rect{opacity:0.55}
+svg:hover .cad-hotspot.cad-add > text{opacity:0.85}
+.cad-hotspot.cad-add:hover > rect{opacity:1!important;fill:rgba(37,99,235,0.22)}
+.cad-hotspot.cad-add:hover > text{opacity:1!important;font-weight:600}
+.cad-hotspot.cad-plus > circle{opacity:0.10;transition:opacity .18s,fill .18s,stroke-width .18s}
+.cad-hotspot.cad-plus > path{opacity:0.18;transition:opacity .18s,stroke-width .18s}
+svg:hover .cad-hotspot.cad-plus > circle{opacity:0.22}
+svg:hover .cad-hotspot.cad-plus > path{opacity:0.38}
+/* Multi-pane assemblies render many more + hotspots — shrink them further so
+   the window design stays the focus. They still fully reveal on direct hover. */
+svg.is-multipane .cad-hotspot.cad-plus > circle{opacity:0.04}
+svg.is-multipane .cad-hotspot.cad-plus > path{opacity:0.10}
+svg.is-multipane:hover .cad-hotspot.cad-plus > circle{opacity:0.12}
+svg.is-multipane:hover .cad-hotspot.cad-plus > path{opacity:0.22}
+svg.is-multipane .cad-hotspot.cad-plus:hover > circle{opacity:1!important;fill:rgba(37,99,235,0.20);stroke-width:1.4}
+svg.is-multipane .cad-hotspot.cad-plus:hover > path{opacity:1!important;stroke-width:1.8}
+.cad-hotspot.cad-plus:hover > circle{opacity:1!important;fill:rgba(37,99,235,0.20);stroke-width:1.4}
+.cad-hotspot.cad-plus:hover > path{opacity:1!important;stroke-width:1.8}
+.pane-splitter{transition:fill .15s}
+.pane-splitter:hover{fill:rgba(37,99,235,0.30)!important}
+.pane-edge{transition:fill .15s,opacity .15s}
+.pane-edge:hover{fill:rgba(37,99,235,0.55)!important;opacity:1}
+/* Visible edge guide — runs along each draggable edge so the user can see exactly
+   where the drag handles are. Renders as a clear blue stripe; brightens on hover. */
+.pane-edge-guide{stroke:#2e5bc8;stroke-width:2.5;opacity:0.55;transition:opacity .15s,stroke-width .15s;pointer-events:none}
+.pane-edge:hover ~ .pane-edge-guide,
+.pane-edge:hover + .pane-edge-guide{opacity:1;stroke-width:4}
+.pane-edge-arrow{fill:#2e5bc8;opacity:0.55;transition:opacity .15s;pointer-events:none}
+.pane-edge:hover ~ .pane-edge-arrow{opacity:1}
+body.dark .pane-edge-guide{stroke:#7b9ee0}
+body.dark .pane-edge-arrow{fill:#7b9ee0}
+/* Selection frame — high-contrast, thick double-stroke (white halo + bold blue),
+   strong dashes, prominent corner ticks, pulsing for attention */
+.cad-selection-frame{stroke:#2e5bc8;stroke-width:2;fill:rgba(37,99,235,0.04);stroke-dasharray:none;pointer-events:none}
+.cad-selection-frame-halo{stroke:#FFFFFF;stroke-width:4;fill:none;pointer-events:none;opacity:0.85}
+.cad-selection-corner{stroke:#2e5bc8;stroke-width:3.5;fill:none;pointer-events:none}
+.cad-selection-corner-halo{stroke:#FFFFFF;stroke-width:6;fill:none;pointer-events:none}
+@keyframes cadSelPulse{0%,100%{opacity:1}50%{opacity:0.65}}
+body.dark .cad-selection-frame{stroke:#7b9ee0;fill:rgba(96,165,250,0.06)}
+body.dark .cad-selection-frame-halo{stroke:#0A0A0A;opacity:0.6}
+body.dark .cad-selection-corner{stroke:#7b9ee0}
+body.dark .cad-selection-corner-halo{stroke:#0A0A0A}
+/* All <details> inside option panels become pill cards automatically */
+/* Layered shadow gives the cards real elevation against the panel bg —
+   close shadow for the contact line + softer wider shadow for the lift.
+   Hover state intensifies both shadows so the active card pops further. */
+#exteriorPanel details, #interiorPanel details{background:#FFFFFF;border:1px solid #E2E8F0;border-radius:2px;margin-bottom:10px;box-shadow:0 1px 2px rgba(15,23,42,0.06),0 4px 12px rgba(15,23,42,0.06);overflow:hidden;transition:border-color .2s,background .2s,box-shadow .2s,transform .15s}
+#exteriorPanel details:hover, #interiorPanel details:hover{box-shadow:0 1px 2px rgba(15,23,42,0.08),0 8px 20px rgba(15,23,42,0.10);border-color:#CBD5E1}
+#exteriorPanel details[open], #interiorPanel details[open]{box-shadow:0 1px 2px rgba(15,23,42,0.08),0 6px 16px rgba(15,23,42,0.09);border-color:#CBD5E1}
+#exteriorPanel details > summary, #interiorPanel details > summary{padding:12px 14px !important;border:none}
+#exteriorPanel details > div:not(.opt-body), #interiorPanel details > div:not(.opt-body){padding:0 14px 14px !important}
+#exteriorPanel details > .opt-body, #interiorPanel details > .opt-body{padding:0 14px 14px}
+#exteriorPanel .divider, #interiorPanel .divider{display:none}
+body.dark #exteriorPanel details, body.dark #interiorPanel details{background:#1A1A1A;border-color:#262626;box-shadow:0 1px 2px rgba(0,0,0,0.20),0 4px 12px rgba(0,0,0,0.25)}
+body.dark #exteriorPanel details:hover, body.dark #interiorPanel details:hover{box-shadow:0 1px 2px rgba(0,0,0,0.25),0 8px 20px rgba(0,0,0,0.35);border-color:#404040}
+body.dark #exteriorPanel details[open], body.dark #interiorPanel details[open]{box-shadow:0 1px 2px rgba(0,0,0,0.25),0 6px 16px rgba(0,0,0,0.30);border-color:#404040}
+.col-handle{cursor:col-resize;background:transparent;position:relative;transition:background .15s}
+.col-handle:hover,.col-handle.dragging{background:rgba(37,99,235,0.30)}
+.col-handle::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:32px;background:#CBD5E1;border-radius:1px;transition:background .15s}
+.col-handle:hover::after,.col-handle.dragging::after{background:#2e5bc8}
+body.dark .col-handle::after{background:#404040}
+body.dark .col-handle:hover::after,body.dark .col-handle.dragging::after{background:#7b9ee0}
+.split-handle{flex:0 0 6px;cursor:col-resize;background:transparent;position:relative;transition:background .15s;z-index:5}
+.split-handle:hover,.split-handle.dragging{background:rgba(37,99,235,0.30)}
+.split-handle::after{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:2px;height:32px;background:#CBD5E1;border-radius:1px;transition:background .15s}
+.split-handle:hover::after,.split-handle.dragging::after{background:#2e5bc8}
+body.dark .split-handle::after{background:#404040}
+body.dark .split-handle:hover::after,body.dark .split-handle.dragging::after{background:#7b9ee0}
+.room-drop.drop-active{border-color:#2e5bc8 !important;background:#eaeaf2}
+.room-drop.drop-active span{color:#2651b3 !important}
+body.dark .room-drop.drop-active{background:#1A2842 !important;border-color:#4a6fd4 !important}
+.unit-row-wrap[draggable="true"]:active{cursor:grabbing}
+.unit-row-wrap[draggable="true"] .drag-handle:hover{color:#64748B}
+.check{display:flex;align-items:center;gap:8px;font-size:13px;color:#0F172A;cursor:pointer;padding:6px 0}
+.check input{accent-color:#2e5bc8;width:14px;height:14px;cursor:pointer}
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:center;justify-content:center;z-index:1000;padding:40px}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;padding:10px 18px;border-radius:3px;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:flex;align-items:center;gap:8px;opacity:0;pointer-events:none;transition:opacity .25s;z-index:1001}
+.toast.show{opacity:1}
+.grille-btn{flex-direction:column;padding:10px 4px;font-size:11px;gap:6px;justify-content:center;align-items:center;width:100%;cursor:pointer;font-family:inherit;border-radius:2px;border:1px solid #CBD5E1;background:#fff;color:#475569;transition:all .15s;display:flex}
+.grille-btn:hover:not(.active){border-color:#94A3B8;background:#F8FAFC}
+.grille-btn.active{border-color:#2e5bc8;background:#eaeaf2;color:#2651b3}
+.info-pill{padding:8px 10px;background:#eaeaf2;border:1px solid #b8c5e0;border-radius:2px;font-size:11px;color:#2651b3;line-height:1.5}
+.row-flat{display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:12px;color:#64748B}
+.row-flat .v{color:#0F172A}
+.cat{cursor:pointer;padding:14px;border:1px solid #E2E8F0;border-radius:3px;background:#fff;text-align:left;font-family:inherit;color:inherit;transition:all .15s}
+.cat:hover:not(.selected){border-color:#94A3B8;background:#F8FAFC}
+.cat.selected{border-color:#2e5bc8;background:#eaeaf2;box-shadow:0 0 0 3px #d6dff4}
+.seg-tab{padding:7px 14px;font-size:12px;font-weight:500;color:#64748B;background:#fff;border:1px solid #E2E8F0;border-radius:3px;cursor:pointer;font-family:inherit;transition:all .15s}
+.seg-tab:hover:not(.active){border-color:#94A3B8;color:#0F172A}
+.seg-tab.active{background:#2e5bc8;color:#fff;border-color:#2e5bc8}
+
+/* ─── Commissions keypad (lock screen) ─── */
+.comm-keypad-btn{height:62px;font-size:20px;font-weight:500;color:#0F172A;background:#F8FAFC;border:1px solid #E2E8F0;border-radius:3px;cursor:pointer;font-family:inherit;transition:all .12s ease;display:flex;align-items:center;justify-content:center;user-select:none}
+.comm-keypad-btn:hover{background:#eaeaf2;border-color:#b8c5e0;color:#2651b3}
+.comm-keypad-btn:active{transform:scale(0.96);background:#d6dff4}
+.comm-keypad-btn.comm-keypad-aux{color:#64748B;font-size:14px;font-weight:600}
+.comm-keypad-btn.comm-keypad-aux:hover{color:#0F172A;background:#F1F5F9;border-color:#CBD5E1}
+@keyframes commShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+@keyframes dashCalPopIn{0%{opacity:0;transform:translateY(-4px) scale(0.96)}100%{opacity:1;transform:translateY(0) scale(1)}}
+body.dark .comm-keypad-btn{background:#0A0A0A;border-color:#1A1A1A;color:#E2E8F0}
+body.dark .comm-keypad-btn:hover{background:#1A1A1A;border-color:#4a6fd4;color:#7b9ee0}
+body.dark .comm-keypad-btn.comm-keypad-aux{color:#94A3B8}
+body.dark #commissionsLockCard,body.dark #commissionsView [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important}
+body.dark #commissionsView{background:#000000!important;color:#E2E8F0}
+body.dark #commissionsView [style*="color:#0A0A0A"]{color:#E2E8F0!important}
+body.dark #commissionsView [style*="color:#64748B"],body.dark #commissionsView [style*="color:#94A3B8"]{color:#94A3B8!important}
+
+/* Commissions calendar */
+.comm-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-top:6px}
+.comm-cal-dow{font-size:10px;font-weight:600;color:#94A3B8;text-transform:uppercase;letter-spacing:.06em;text-align:center;padding:4px 0}
+/* Day cells: fixed compact height (no aspect-ratio) so the 6-row month fits
+   inside the widget body regardless of widget width. Wider widget = wider
+   rectangles, not large squares that overflow the widget. */
+.comm-cal-day{position:relative;height:34px;border-radius:2px;border:1px solid transparent;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2px;transition:all 120ms ease;font-family:inherit;font-size:11.5px;color:#0F172A;user-select:none;line-height:1.1}
+.comm-cal-day:hover{background:#F1F5F9;border-color:#E2E8F0}
+.comm-cal-day.cal-today{font-weight:600;color:#2e5bc8}
+.comm-cal-day.cal-today::before{content:'';position:absolute;top:2px;right:3px;width:4px;height:4px;border-radius:50%;background:#2e5bc8}
+.comm-cal-day.cal-selected{background:#2e5bc8;color:#fff;border-color:#2e5bc8}
+.comm-cal-day.cal-selected.cal-today{color:#fff}
+.comm-cal-day.cal-selected.cal-today::before{background:#fff}
+.comm-cal-day.cal-empty{cursor:default;pointer-events:none}
+.comm-cal-day.cal-other-month{color:#CBD5E1;cursor:default;pointer-events:none}
+.comm-cal-dots{display:flex;gap:2px;margin-top:auto;height:5px;align-items:center;justify-content:center}
+.comm-cal-dot{width:4px;height:4px;border-radius:50%}
+.comm-cal-day.cal-selected .comm-cal-dot{background:rgba(255,255,255,0.85)!important}
+body.dark .comm-cal-day{color:#E2E8F0}
+body.dark .comm-cal-day:hover{background:#1A1A1A;border-color:#262626}
+body.dark .comm-cal-day.cal-other-month{color:#404040}
+body.dark .comm-cal-dow{color:#64748B}
+
+/* Full-sized calendar view */
+/* Bulletproof calendar dimensions — locked with !important so no layout shift,
+   no flex/grid stretching, no content-driven resize can change the calendar
+   size between months. All widths are HARDCODED PIXELS so there is zero
+   variability. Card 1078×757px, grid 1078×720px, cells 154×120px each. */
+.cal-card-wrap{
+  width:1078px !important;
+  min-width:1078px !important;
+  max-width:1078px !important;
+  height:757px !important;
+  min-height:757px !important;
+  max-height:757px !important;
+  flex-shrink:0 !important;
+  flex-grow:0 !important;
+  align-self:flex-start !important;
+}
+#calBigGrid{
+  display:grid !important;
+  grid-template-columns:repeat(7,154px) !important;
+  grid-template-rows:repeat(6,120px) !important;
+  width:1078px !important;
+  min-width:1078px !important;
+  max-width:1078px !important;
+  height:720px !important;
+  min-height:720px !important;
+  max-height:720px !important;
+}
+.cal-big-cell{position:relative;width:154px !important;min-width:154px !important;max-width:154px !important;height:120px !important;min-height:120px !important;max-height:120px !important;padding:8px 8px 6px;border-right:1px solid #F1F5F9;border-bottom:1px solid #F1F5F9;cursor:pointer;background:#fff;transition:background 120ms ease;display:flex;flex-direction:column;gap:4px;overflow:hidden;font-family:inherit;font-size:13px;color:#0F172A;text-align:left;box-sizing:border-box}
+/* DOW header above the grid — also locked at 1078px to match the grid below. */
+.cal-card-wrap > div:first-child{
+  width:1078px !important;
+  min-width:1078px !important;
+  max-width:1078px !important;
+}
+.cal-big-cell:hover{background:#F8FAFC}
+.cal-big-cell.cal-empty,.cal-big-cell.cal-other-month{background:#FAFBFC;cursor:default;color:#CBD5E1}
+.cal-big-cell.cal-selected{background:#eaeaf2;box-shadow:inset 0 0 0 1.5px #2e5bc8;z-index:1}
+.cal-big-cell.cal-today .cal-day-num{background:#2e5bc8;color:#fff;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;margin-left:-2px;margin-top:-2px}
+.cal-day-num{font-size:13px;font-weight:500;color:#0F172A;flex-shrink:0}
+.cal-event-chip{display:flex;align-items:center;gap:5px;padding:3px 7px 3px 6px;border-radius:2px;font-size:11px;font-weight:500;background:#F1F5F9;color:#0F172A;border-left:3px solid #94A3B8;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3;transition:transform 120ms ease,filter 120ms ease}
+.cal-event-chip:hover{filter:brightness(0.96);transform:translateX(1px)}
+.cal-event-more{font-size:10.5px;color:#64748B;font-weight:500;padding:2px 6px;cursor:default}
+body.dark .cal-big-cell{background:#0A0A0A;border-color:#1A1A1A}
+body.dark .cal-big-cell:hover{background:#1A1A1A}
+body.dark .cal-big-cell.cal-empty,body.dark .cal-big-cell.cal-other-month{background:#000000;color:#404040}
+body.dark .cal-big-cell.cal-selected{background:#1E3A8A;box-shadow:inset 0 0 0 1.5px #4a6fd4}
+body.dark .cal-day-num{color:#E2E8F0}
+body.dark .cal-event-chip{background:#1A1A1A;color:#E2E8F0}
+
+/* ─── Dark mode ─── */
+body.dark{color:#E2E8F0;background:#000000}
+body.dark html{background:#000000}
+body.dark .btn-primary{background:#4a6fd4;border-color:#4a6fd4}
+body.dark .btn-primary:hover{background:#2e5bc8}
+body.dark .btn-secondary{background:#1A1A1A;color:#E2E8F0;border-color:#262626}
+body.dark .btn-secondary:hover{background:#242424;border-color:#404040}
+body.dark .btn-ghost{color:#94A3B8}
+body.dark .btn-ghost:hover{background:#1A1A1A;color:#F1F5F9}
+body.dark .input,body.dark .select{background-color:#0A0A0A;border-color:#262626;color:#E2E8F0}
+body.dark .select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%2394A3B8' stroke-width='1.5' fill='none'/></svg>")}
+body.dark .label{color:#94A3B8}
+body.dark .chip{background:#1A1A1A;color:#94A3B8}
+body.dark .chip-blue{background:#1A2842;color:#7b9ee0}
+body.dark .chip-green{background:#14321F;color:#4ADE80}
+body.dark .tab{color:#94A3B8}
+body.dark .tab.active{color:#7b9ee0;border-bottom-color:#7b9ee0}
+body.dark .stage{color:#404040}
+body.dark .stage.active{color:#7b9ee0}
+body.dark .stage.done{color:#E2E8F0}
+body.dark .stage.done .stage-num{background:#E2E8F0;color:#0A0A0A;border-color:#E2E8F0}
+body.dark .divider{background:#1A1A1A}
+body.dark .swatch{border-color:#262626}
+body.dark .tb{color:#94A3B8}
+body.dark .tb:hover{background:#1A1A1A;color:#E2E8F0}
+body.dark .tb.active{background:#1A2842;color:#7b9ee0}
+body.dark details summary::after{border-color:#64748B}
+body.dark .seg{background:#0A0A0A}
+body.dark .seg button{color:#94A3B8}
+body.dark .seg button.active{background:#1A1A1A;color:#7b9ee0}
+body.dark .unit-row:hover:not(.active){background:#1A1A1A}
+body.dark .unit-row.active{background:#1A2842;border-color:#4a6fd4}
+body.dark #viewport{background:#050505 !important}
+body.dark #modeBadge,body.dark #dimsOverlay{background:rgba(15,23,41,.92) !important;border-color:#262626 !important;color:#94A3B8 !important}
+// (mode badge removed)
+body.dark #dimsOverlay span{color:#94A3B8 !important}
+body.dark #validationStrip{background:#0E2417 !important;border-top-color:#15803D !important;color:#86EFAC !important}
+body.dark .swatch.selected{outline:2px solid #7b9ee0;outline-offset:2px}
+body.dark .info-pill{background:#1A1A1A;border-color:#262626;color:#94A3B8}
+body.dark details summary span{color:#E2E8F0}
+body.dark .grille-btn{background:#0A0A0A;border-color:#262626;color:#94A3B8}
+body.dark .grille-btn:hover{background:#1A1A1A;border-color:#404040}
+body.dark .grille-btn.active{background:#1A2842;border-color:#4a6fd4;color:#7b9ee0}
+body.dark .check{color:#E2E8F0}
+body.dark .modal-bg{background:rgba(0,0,0,.7)}
+body.dark .toast{background:#E2E8F0;color:#0A0A0A}
+body.dark .grille-btn{background:#0A0A0A;border-color:#262626;color:#94A3B8}
+body.dark .grille-btn:hover:not(.active){background:#1A1A1A;border-color:#404040}
+body.dark .grille-btn.active{background:#1A2842;border-color:#4a6fd4;color:#7b9ee0}
+body.dark .info-pill{background:#1A2842;border-color:#4a6fd4;color:#93C5FD}
+body.dark .row-flat{color:#94A3B8}
+body.dark .row-flat .v{color:#E2E8F0}
+body.dark .cat{background:#1A1A1A;border-color:#262626;color:#E2E8F0}
+body.dark .cat:hover:not(.selected){background:#242424;border-color:#404040}
+body.dark .cat.selected{background:#1A2842;border-color:#4a6fd4;box-shadow:0 0 0 3px rgba(59,130,246,.25)}
+body.dark .seg-tab{background:#1A1A1A;border-color:#262626;color:#94A3B8}
+body.dark .seg-tab:hover:not(.active){border-color:#404040;color:#E2E8F0}
+body.dark .seg-tab.active{background:#E2E8F0;color:#0A0A0A;border-color:#E2E8F0}
+/* Surface paint via attribute selectors — overrides inline styles where needed */
+body.dark [data-surf="card"],body.dark [data-surf="topbar"]{background:#1A1A1A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark [data-surf="page"]{background:#000000!important;color:#E2E8F0!important}
+body.dark [data-surf="ink-text"]{color:#E2E8F0!important}
+body.dark [data-surf="muted-text"]{color:#94A3B8!important}
+body.dark [data-surf="border-b"]{border-bottom-color:#262626!important}
+body.dark [data-surf="border-l"]{border-left-color:#262626!important}
+body.dark [data-surf="border-r"]{border-right-color:#262626!important}
+body.dark [data-surf="border-t"]{border-top-color:#262626!important}
+body.dark [data-surf="valid-strip"]{background:#0E2A1E!important;border-top-color:#14532D!important;color:#86EFAC!important}
+body.dark [data-surf="warn-strip"]{background:#3B2308!important;border-top-color:#7C2D12!important;color:#FCD34D!important}
+
+/* ── Quote configurator EXTERIOR / INTERIOR options column dark mode ── */
+/* The aside containers themselves carry data-surf="card" and are already
+   handled above. These rules cover the *inner* inline-styled divs that the
+   data-surf rule cannot reach: pale gradient header bands, scrolling panels,
+   expand/collapse toolbar buttons, status pills, header text, and borders. */
+/* Header band + scrolling panel — both use inline linear-gradient backgrounds */
+body.dark [data-col="ext"] > div[style*="linear-gradient(180deg,#F5F8FD"],
+body.dark [data-col="int"] > div[style*="linear-gradient(180deg,#FDF5F5"]{background:#0A0A0A!important;border-bottom-color:#262626!important}
+body.dark #exteriorPanel,body.dark #interiorPanel{background:#000000!important}
+/* "View from outside" / "View from inside" subtitle text */
+body.dark [data-col="ext"] [style*="color:#0F172A"],body.dark [data-col="int"] [style*="color:#0F172A"]{color:#E2E8F0!important}
+/* Expand-all / Collapse-all toolbar buttons (inline background:#fff) */
+body.dark [data-options-toggle]{background:#1A1A1A!important;border-color:#262626!important;color:#94A3B8!important}
+body.dark [data-options-toggle]:hover{background:#242424!important;border-color:#404040!important;color:#E2E8F0!important}
+/* Status pills: CURB APPEAL (exterior) + FUNCTION (interior) */
+body.dark [data-col="ext"] [style*="background:#d6dff4"]{background:#1A2842!important;color:#93C5FD!important}
+body.dark [data-col="int"] [style*="background:#FEE2E2"]{background:#3B1D1D!important;color:#FCA5A5!important}
+/* Inline border-bottom #E2E8F0 dividers inside the columns */
+body.dark [data-col="ext"] [style*="border-bottom:1px solid #E2E8F0"],
+body.dark [data-col="int"] [style*="border-bottom:1px solid #E2E8F0"]{border-bottom-color:#262626!important}
+/* Catch-all for any inline background:#fff inside the option columns */
+body.dark [data-col="ext"] [style*="background:#fff"],
+body.dark [data-col="int"] [style*="background:#fff"]{background:#1A1A1A!important}
+/* Unit summary card text (Base · Casement, Frame · Brick Red, etc.) and
+   Updates-live caption — the card itself is already darkened via data-surf="card" */
+body.dark [data-col="int"] [data-surf="card"] [style*="color:#0F172A"]{color:#E2E8F0!important}
+body.dark [data-col="int"] [data-surf="card"] [style*="color:#475569"]{color:#94A3B8!important}
+
+/* Selected shape-tile mint background → deep green in dark mode */
+body.dark [data-col="ext"] [style*="background:#ECFDF5"]{background:#0E2419!important}
+
+/* ── Comprehensive dark mode coverage for redesigned views (Customers / Orders / Dashboard / Quote configurator) ── */
+/* Top-level view containers */
+body.dark #customersView,body.dark #ordersView,body.dark #dashboardView,body.dark #quoteDetailView{background:#000000!important;color:#E2E8F0}
+/* Section header bars */
+body.dark #customersView > div:first-child,body.dark #ordersView > div:first-child,body.dark #dashboardView > div:first-child{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important}
+/* Headers / cells / panels using inline white backgrounds */
+body.dark #customersView h1,body.dark #ordersView h1,body.dark #dashboardView h1,body.dark #customerDetail h1,body.dark #orderDetail h1{color:#F1F5F9!important}
+/* Tables (master list) */
+body.dark #customersView table,body.dark #ordersView table{background:#0A0A0A!important;color:#E2E8F0}
+body.dark #customersView thead tr,body.dark #ordersView thead tr{background:#1A1A1A!important;border-bottom-color:#262626!important}
+body.dark #customersView thead th,body.dark #ordersView thead th{color:#94A3B8!important}
+body.dark #customersView tbody tr,body.dark #ordersView tbody tr{border-top-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #customersView tbody tr td,body.dark #ordersView tbody tr td{color:#E2E8F0}
+/* Master-list panel + detail panel surfaces */
+body.dark #customersView > div:last-child > div:first-child,body.dark #ordersView > div:last-child > div:first-child{background:#000000!important;border-right-color:#1A1A1A!important}
+body.dark #customerDetail,body.dark #orderDetail{background:#0A0A0A!important;color:#E2E8F0!important}
+body.dark #customerDetail > div:first-child,body.dark #orderDetail > div:first-child{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important}
+/* Detail panel sub-cards */
+body.dark #customerDetail [style*="background:#F8FAFC"],body.dark #orderDetail [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #customerDetail [style*="background:#fff"],body.dark #orderDetail [style*="background:#fff"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #customerDetail [style*="background:#eaeaf2"],body.dark #orderDetail [style*="background:#eaeaf2"]{background:#0E1638!important;border-color:#1E3A8A!important;color:#b8c5e0!important}
+body.dark #customerDetail [style*="background:#F0FDF4"],body.dark #orderDetail [style*="background:#F0FDF4"]{background:#052E1B!important;border-color:#14532D!important;color:#86EFAC!important}
+/* Dashboard header (compact band) */
+body.dark #dashboardView > div:first-child{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important}
+body.dark #dashboardView > div:first-child h1{color:#F1F5F9!important}
+body.dark #dashboardView .dash-widget{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #dashboardView .dash-widget h3,body.dark #dashboardView .dash-widget h4{color:#F1F5F9!important}
+/* Dashboard KPI tiles — gradients lose meaning, use solid surface */
+body.dark #dashboardView [style*="linear-gradient(135deg,#eaeaf2"],body.dark #dashboardView [style*="background:linear-gradient(135deg,#F0FDF4"]{background:#1A1A1A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #dashboardView [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0!important}
+body.dark #dashboardView [style*="background:#FAFBFC"]{background:#000000!important}
+body.dark #dashboardView [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+/* Customer / Order header inline white tiles */
+body.dark #customersView > div:first-child [style*="background:#fff"],body.dark #ordersView > div:first-child [style*="background:#fff"]{background:#0A0A0A!important;color:#E2E8F0}
+body.dark #customersView select,body.dark #ordersView select,body.dark #dashboardView select{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #customersView input,body.dark #ordersView input{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #customersView input::placeholder,body.dark #ordersView input::placeholder{color:#64748B!important}
+/* Status-pill backgrounds — let them keep their semantic colors but add light mode-friendly contrast */
+/* Sticky table thead in dark */
+body.dark #customersView thead,body.dark #ordersView thead{box-shadow:0 1px 0 #1A1A1A}
+/* New quote modal */
+body.dark #newQuoteModal .modal-card{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0!important}
+body.dark #newQuoteModal h2,body.dark #newQuoteModal h3{color:#F1F5F9!important}
+body.dark #newQuoteModal input,body.dark #newQuoteModal select,body.dark #newQuoteModal textarea{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #newQuoteModal [style*="background:#fff"]{background:#1A1A1A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #newQuoteModal [style*="background:#eaeaf2"]{background:#0E1638!important;border-color:#1E3A8A!important;color:#b8c5e0!important}
+body.dark #newQuoteModal [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #newQuoteModal [data-pick-cust]{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #newQuoteModal [data-pick-cust][style*="background:#eaeaf2"]{background:#0E1638!important;color:#b8c5e0}
+body.dark #newQuoteModal [data-pick-fact]{background:#0A0A0A!important;border-color:#262626!important}
+body.dark #newQuoteModal [style*="background:#FAFBFC"]{background:#000000!important;border-top-color:#1A1A1A!important}
+body.dark #newQuoteModal [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #newQuoteModal [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #newQuoteModal [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #newQuoteModal [style*="background:#d6dff4"]{background:#1E3A8A!important;color:#b8c5e0!important}
+body.dark #newQuoteModal [style*="background:#F1F5F9"]{background:#1A1A1A!important}
+body.dark #newQuoteModal [style*="background:#E2E8F0"]{background:#262626!important}
+body.dark #customerModal [style*="background:#fff"],body.dark #factoryDetailModal [style*="background:#fff"]{background:#0A0A0A!important;color:#E2E8F0!important}
+body.dark #customerModal [style*="color:#0A0A0A"],body.dark #factoryDetailModal [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #customerModal [style*="color:#64748B"],body.dark #factoryDetailModal [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #customerModal [style*="background:#FAFBFC"],body.dark #customerModal [style*="background:#F1F5F9"]{background:#1A1A1A!important}
+body.dark #submitConfirmModal [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #submitConfirmModal [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #submitConfirmModal [style*="color:#404040"]{color:#CBD5E1!important}
+
+/* ═══ Help & Support page (full view) ═══════════════════════════════════════ */
+body.dark #helpView{background:#000000!important;color:#E2E8F0}
+body.dark #helpView > div:first-child{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important}
+body.dark #helpView h1,body.dark #helpView h2{color:#F1F5F9!important}
+body.dark #helpView p{color:#94A3B8!important}
+body.dark #helpView [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #helpView [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #helpView [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #helpView [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #helpView [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #helpView [style*="color:#94A3B8"]{color:#94A3B8!important}
+body.dark #helpView [style*="linear-gradient(135deg,#eaeaf2"],body.dark #helpView [style*="linear-gradient(135deg,#F0FDF4"],body.dark #helpView [style*="linear-gradient(135deg,#FFFBEB"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #helpView select,body.dark #helpView input,body.dark #helpView textarea{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #helpView select::placeholder,body.dark #helpView input::placeholder,body.dark #helpView textarea::placeholder{color:#64748B!important}
+body.dark #helpView details{border-top-color:#1A1A1A!important}
+body.dark #helpView details summary{color:#F1F5F9!important}
+body.dark #helpView details summary span{color:#F1F5F9!important}
+body.dark #helpView details > div{color:#CBD5E1!important}
+body.dark #helpView a{color:#7b9ee0!important}
+
+/* ═══ User menu dropdown ════════════════════════════════════════════════════ */
+body.dark #userMenu{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #userMenu [style*="border-bottom:1px solid #F1F5F9"],body.dark #userMenu [style*="border-top:1px solid #F1F5F9"]{border-color:#1A1A1A!important}
+body.dark #userMenu [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #userMenu [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #userMenu [style*="color:#94A3B8"]{color:#64748B!important}
+body.dark #userMenuBtn{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #userMenuBtn span{color:#E2E8F0!important}
+body.dark #userMenu button[data-user-menu]:hover{background:#1A1A1A!important}
+body.dark #userMenu button[data-user-menu="signout"]:hover{background:#3F1D1D!important}
+
+/* ═══ Account modal (Profile / Password / Notifications) ══════════════════ */
+body.dark #acctModalHost > div > div{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #acctModalHost h2,body.dark #acctModalHost [style*="font-weight:600;color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #acctModalHost [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #acctModalHost [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #acctModalHost [style*="color:#94A3B8"]{color:#64748B!important}
+body.dark #acctModalHost [style*="background:#fff"]{background:#0A0A0A!important;color:#E2E8F0!important}
+body.dark #acctModalHost [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #acctModalHost [style*="border:1px solid #E2E8F0"]{border-color:#1A1A1A!important}
+body.dark #acctModalHost [style*="border-bottom:1px solid #E2E8F0"]{border-bottom-color:#1A1A1A!important}
+body.dark #acctModalHost input{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #acctModalHost input[disabled],body.dark #acctModalHost input[readonly]{background:#1A1A1A!important;color:#94A3B8!important;border-color:#1A1A1A!important}
+body.dark #acctModalHost input::placeholder{color:#64748B!important}
+body.dark #acctModalHost [style*="background:#FEF3C7"]{background:#3F2D0E!important;border-color:#78350F!important;color:#FCD34D!important}
+body.dark #acctModalHost [style*="background:#F0F9FF"]{background:#0A1B2E!important;border-color:#1E3A8A!important;color:#b8c5e0!important}
+body.dark #acctModalHost .acct-tab[style*="border-bottom-color: rgb(37, 99, 235)"]{color:#F1F5F9!important}
+
+/* ═══ Quote-detail fulfillment card + toolbar ═══════════════════════════════ */
+body.dark #qdFulfillmentCard{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important}
+body.dark #qdFulfillmentCard [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #qdFulfillmentCard [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #qdFulfillmentCard [style*="color:#94A3B8"]{color:#64748B!important}
+body.dark #qdFulfillmentCard [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #qdFulfillmentCard [style*="background:#F1F5F9"]{background:#1A1A1A!important}
+body.dark #qdFulfillmentCard [style*="background:#FAFBFC"]{background:#000000!important;border-color:#1A1A1A!important}
+body.dark #qdFulfillmentCard [style*="background:#eaeaf2"]{background:#0E1638!important;border-color:#1E3A8A!important}
+body.dark #qdFulfillmentCard input{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #qdFulfillmentCard [style*="background:#fff"]{background:#0A0A0A!important;color:#E2E8F0!important}
+
+/* ═══ Calendar full view (top header + outer chrome) ═══════════════════════ */
+body.dark #calendarView{background:#000000!important;color:#E2E8F0}
+body.dark #calendarView h1,body.dark #calendarView [style*="font-weight:600;color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #calendarView [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #calendarView [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #calendarView [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #calendarView [style*="color:#94A3B8"]{color:#64748B!important}
+body.dark .cal-card-wrap{background:#0A0A0A!important;border-color:#1A1A1A!important}
+body.dark .cal-card-wrap > div:first-child{background:#1A1A1A!important;border-bottom-color:#262626!important}
+body.dark .cal-card-wrap > div:first-child > div{color:#94A3B8!important;border-right-color:#1A1A1A!important}
+body.dark #calSidebar{background:#0A0A0A!important;border-color:#1A1A1A!important}
+body.dark #calSidebar [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #calSidebar [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #calSidebar [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #calSidebar input,body.dark #calSidebar select,body.dark #calSidebar textarea{background:#1A1A1A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #calSidebar input::placeholder,body.dark #calSidebar textarea::placeholder{color:#64748B!important}
+body.dark #calendarView button[id^="cal"]{background:#1A1A1A!important;border-color:#262626!important;color:#CBD5E1!important}
+body.dark #calendarView button[id^="cal"]:hover{background:#262626!important;color:#F1F5F9!important}
+
+/* ═══ Quote-detail full view (toolbar + body) ═══════════════════════════════ */
+body.dark #quoteDetailView{background:#000000!important;color:#E2E8F0}
+body.dark #quoteDetailView > div:first-child{background:rgba(15,23,42,0.92)!important;border-bottom-color:#1A1A1A!important}
+body.dark #quoteDetailView [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #quoteDetailView [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #quoteDetailView [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #qdQuoteId,body.dark #qdProjectLine{color:#F1F5F9!important}
+
+/* ═══ Universal dark-mode inline-style flips ═══════════════════════════════
+   Inline styles like style="color:#0F172A" beat container-level dark rules.
+   These rules catch the most common light-mode inline colors and force them
+   to dark-mode equivalents anywhere inside the main views/widgets/modals. */
+/* Text colors (universal — work on any descendant, in any dark-mode container) */
+body.dark #dashboardView [style*="color:#0A0A0A"],
+body.dark #customersView [style*="color:#0A0A0A"],
+body.dark #ordersView [style*="color:#0A0A0A"],
+body.dark #customerDetail [style*="color:#0A0A0A"],
+body.dark #orderDetail [style*="color:#0A0A0A"],
+body.dark #quoteDetailView [style*="color:#0A0A0A"],
+body.dark #catalogView [style*="color:#0A0A0A"],
+body.dark #settingsView [style*="color:#0A0A0A"],
+body.dark .dash-widget [style*="color:#0A0A0A"],
+body.dark .modal-bg [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #dashboardView [style*="color:#1A1A1A"],
+body.dark .dash-widget [style*="color:#1A1A1A"],
+body.dark .modal-bg [style*="color:#1A1A1A"]{color:#F1F5F9!important}
+body.dark #dashboardView [style*="color:#404040"],
+body.dark #customersView [style*="color:#404040"],
+body.dark #ordersView [style*="color:#404040"],
+body.dark #customerDetail [style*="color:#404040"],
+body.dark #orderDetail [style*="color:#404040"],
+body.dark #quoteDetailView [style*="color:#404040"],
+body.dark #settingsView [style*="color:#404040"],
+body.dark .dash-widget [style*="color:#404040"],
+body.dark .modal-bg [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #dashboardView [style*="color:#64748B"],
+body.dark #customersView [style*="color:#64748B"],
+body.dark #ordersView [style*="color:#64748B"],
+body.dark #customerDetail [style*="color:#64748B"],
+body.dark #orderDetail [style*="color:#64748B"],
+body.dark #quoteDetailView [style*="color:#64748B"],
+body.dark #settingsView [style*="color:#64748B"],
+body.dark .dash-widget [style*="color:#64748B"],
+body.dark .modal-bg [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #dashboardView [style*="color:#94A3B8"],
+body.dark #customersView [style*="color:#94A3B8"],
+body.dark #ordersView [style*="color:#94A3B8"],
+body.dark #customerDetail [style*="color:#94A3B8"],
+body.dark #orderDetail [style*="color:#94A3B8"],
+body.dark #quoteDetailView [style*="color:#94A3B8"],
+body.dark #settingsView [style*="color:#94A3B8"],
+body.dark .dash-widget [style*="color:#94A3B8"]{color:#64748B!important}
+/* Semantic colors — keep meaning, lighten for contrast on dark */
+body.dark .dash-widget [style*="color:#92400E"],
+body.dark .dash-widget [style*="color:#78350F"],
+body.dark #dashboardView [style*="color:#92400E"],
+body.dark #dashboardView [style*="color:#78350F"]{color:#FCD34D!important}
+body.dark .dash-widget [style*="color:#D97706"],
+body.dark #dashboardView [style*="color:#D97706"]{color:#FBBF24!important}
+body.dark .dash-widget [style*="color:#24479e"],
+body.dark #dashboardView [style*="color:#24479e"],
+body.dark #customerDetail [style*="color:#24479e"],
+body.dark #orderDetail [style*="color:#24479e"]{color:#93C5FD!important}
+body.dark .dash-widget [style*="color:#2651b3"],
+body.dark #dashboardView [style*="color:#2651b3"],
+body.dark #customersView [style*="color:#2651b3"],
+body.dark #customerDetail [style*="color:#2651b3"]{color:#93C5FD!important}
+body.dark .dash-widget [style*="color:#166534"],
+body.dark #dashboardView [style*="color:#166534"],
+body.dark #customerDetail [style*="color:#166534"]{color:#86EFAC!important}
+body.dark .dash-widget [style*="color:#15803D"],
+body.dark #dashboardView [style*="color:#15803D"]{color:#86EFAC!important}
+body.dark [style*="color:#B91C1C"]{color:#FCA5A5!important}
+body.dark [style*="color:#DC2626"]{color:#F87171!important}
+body.dark [style*="color:#0E7490"]{color:#67E8F9!important}
+
+/* Background colors (descendant-scoped to avoid breaking things like gradient column headers) */
+body.dark .dash-widget [style*="background:#fff"],
+body.dark #customerDetail [style*="background:#fff"],
+body.dark #orderDetail [style*="background:#fff"],
+body.dark .dash-widget [style*="background:#FFFFFF"]{background:#0A0A0A!important;border-color:#1A1A1A}
+body.dark .dash-widget [style*="background:#F8FAFC"],
+body.dark #dashboardView [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark .dash-widget [style*="background:#FAFBFC"]{background:#000000!important}
+body.dark .dash-widget [style*="background:#F1F5F9"]{background:#1A1A1A!important}
+body.dark .dash-widget [style*="background:#d6dff4"]{background:#1E3A8A!important;color:#b8c5e0}
+body.dark .dash-widget [style*="background:#eaeaf2"],
+body.dark #customerDetail [style*="background:#eaeaf2"]{background:#0E1638!important;border-color:#1E3A8A!important}
+body.dark .dash-widget [style*="background:#F0FDF4"],
+body.dark #customerDetail [style*="background:#F0FDF4"]{background:#052E1B!important;border-color:#14532D!important}
+body.dark .dash-widget [style*="background:#FEF3C7"]{background:#451A03!important;border-color:#7C2D12!important}
+body.dark .dash-widget [style*="background:#FFFBEB"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark .dash-widget [style*="background:#FDE68A"]{background:#451A03!important;border-color:#92400E!important}
+body.dark .dash-widget [style*="background:#FEE2E2"]{background:#3B1620!important;border-color:#7F1D1D!important}
+body.dark .dash-widget [style*="background:#CFFAFE"]{background:#164E63!important;color:#67E8F9}
+body.dark .dash-widget [style*="background:rgba(255,255,255"]{background:rgba(15,23,42,0.5)!important;border-color:#262626}
+/* Gradient backgrounds (any direction) — flatten to dark surface */
+body.dark .dash-widget [style*="linear-gradient(135deg,#FEF3C7"],
+body.dark #dashboardView [style*="linear-gradient(135deg,#FEF3C7"]{background:linear-gradient(135deg,#451A03,#1A1A1A)!important;border-color:#92400E!important}
+body.dark #dashboardView [style*="linear-gradient(135deg,#F0FDF4"]{background:linear-gradient(135deg,#052E1B,#1A1A1A)!important;border-color:#14532D!important}
+body.dark #dashboardView [style*="linear-gradient(135deg,#eaeaf2"]{background:linear-gradient(135deg,#0E1638,#1A1A1A)!important;border-color:#1E3A8A!important}
+
+/* Customer/Order detail panel inner tiles — explicit cascade for inner numbers */
+body.dark #customerDetail .mono,body.dark #orderDetail .mono{color:#F1F5F9}
+body.dark #customerDetail [class="mono"][style*="color:#0A0A0A"],
+body.dark #orderDetail [class="mono"][style*="color:#0A0A0A"]{color:#F1F5F9!important}
+
+/* Customer row hover state (Top Customers widget) */
+body.dark .dash-cust-row{background:#1A1A1A!important;border-color:#262626!important}
+body.dark .dash-cust-row:hover{background:#242424!important}
+body.dark .dash-cust-row [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark .dash-attn{background:rgba(15,23,42,0.4)!important;border-color:#92400E!important;color:#FCD34D!important}
+body.dark .dash-attn:hover{background:rgba(15,23,42,0.7)!important}
+body.dark .dash-attn strong{color:#FDE68A!important}
+
+/* Inactive status pill in dark mode — gray-on-gray needs better contrast */
+body.dark [style*="background:#F1F5F9"][style*="color:#404040"]{background:#262626!important;color:#CBD5E1!important}
+
+/* Recent quotes table inside widget */
+body.dark .dash-widget table{background:transparent!important}
+body.dark .dash-widget thead tr{background:#1A1A1A!important;border-bottom-color:#262626}
+body.dark .dash-widget thead th{color:#94A3B8!important}
+body.dark .dash-widget tbody tr{border-top-color:#1A1A1A!important}
+body.dark .dash-widget tbody tr td{color:#E2E8F0!important}
+body.dark .dash-quote-row:hover td{background:#1A1A1A!important}
+
+/* Topbar tip text + RM badge */
+body.dark [style*="background:#F8FAFC"][style*="border:1px solid #E2E8F0"][style*="border-radius:3px"]{background:#1A1A1A!important;border-color:#262626!important}
+
+/* Status pill backgrounds — semantic colors lightened for dark mode */
+body.dark span[style*="background:#eaeaf2"][style*="color:#2651b3"]{background:#0E1638!important;color:#b8c5e0!important}
+body.dark span[style*="background:#FEF3C7"][style*="color:#92400E"]{background:#451A03!important;color:#FCD34D!important}
+body.dark span[style*="background:#F0FDF4"][style*="color:#166534"]{background:#052E1B!important;color:#86EFAC!important}
+body.dark span[style*="background:#F1F5F9"][style*="color:#404040"]{background:#262626!important;color:#CBD5E1!important}
+
+/* Catalog view */
+body.dark #catalogView{background:#000000!important;color:#E2E8F0}
+body.dark #catalogView [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important}
+
+/* Top nav active state */
+body.dark #topNav button[style*="background:#F1F5F9"]{background:#1A1A1A!important;color:#F1F5F9!important}
+
+/* ── Pipeline funnel widget ── */
+.funnel-stage:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,0.08)}
+.funnel-stage:active{transform:translateY(0)}
+body.dark .funnel-stage{background:#1A1A1A!important;border-color:#262626!important}
+body.dark .funnel-stage:hover{background:#242424!important;box-shadow:0 4px 12px rgba(0,0,0,0.4)}
+body.dark .funnel-stage [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark .funnel-stage [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark .funnel-stage [style*="color:#2651b3"]{color:#93C5FD!important}
+body.dark .funnel-stage [style*="color:#92400E"]{color:#FCD34D!important}
+body.dark .funnel-stage [style*="color:#0E7490"]{color:#67E8F9!important}
+body.dark .funnel-stage [style*="color:#166534"]{color:#86EFAC!important}
+/* Funnel chevron arrow connectors — flatten in dark */
+body.dark .funnel-stage [style*="rotate(45deg)"]{background:#1A1A1A!important;border-color:#262626!important;box-shadow:1px -1px 0 #0A0A0A inset!important}
+
+/* New dashboard structured layout — sub-card surfaces */
+body.dark #dashFunnel,
+body.dark #dashAttention > div,
+body.dark #dashRecentQuotes > div,
+body.dark #dashFactoryPipeline > div,
+body.dark #dashTopCustomers > div,
+body.dark #dashActivity > div{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark #dashKpiBoard > div{background:#0A0A0A!important;border-color:#1A1A1A!important}
+body.dark #dashKpiBoard [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+
+/* ─── New dashboard grid system (widget drag/drop/resize) ────────────── */
+.dash-kpi{transition:border-color .15s ease,transform .15s ease}
+.dash-kpi:hover{border-color:#CBD5E1}
+#dashGrid{grid-auto-rows:minmax(0,90px);grid-auto-flow:row dense;align-items:stretch}
+.dash-widget{position:relative;background:#fff;border:1px solid #E5E7EB;border-radius:2px;overflow:hidden;transition:border-color .15s ease,box-shadow .15s ease,opacity .15s ease,grid-column-start .25s ease,grid-column-end .25s ease,grid-row-start .25s ease,grid-row-end .25s ease;display:flex;flex-direction:column;min-height:0;min-width:0}
+.dash-widget:hover{border-color:#D1D5DB}
+.dash-widget.is-dragging{opacity:.6;z-index:20;transition:none;box-shadow:0 12px 32px rgba(15,23,42,.18);cursor:grabbing!important}
+.dash-widget.is-resizing{outline:2px solid #2e5bc8;outline-offset:-1px;z-index:10;border-color:#2e5bc8!important;box-shadow:0 8px 24px rgba(37,99,235,.18);transition:none}
+body.dash-edit-mode .dash-widget{border-style:dashed;border-color:#b8c5e0;cursor:grab}
+body.dash-edit-mode #dashWidgetHeader{display:none}
+body.dash-edit-mode .dash-widget:hover{border-color:#2e5bc8;box-shadow:0 2px 8px rgba(37,99,235,.08)}
+body.dash-edit-mode .dash-widget:active{cursor:grabbing}
+.dash-widget-body{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.dash-widget-body > *{flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto}
+
+/* Chrome (drag handle + remove) — only visible in edit mode */
+.dash-widget-chrome{display:none;position:absolute;top:8px;right:8px;z-index:6;gap:4px}
+body.dash-edit-mode .dash-widget-chrome{display:flex}
+.dash-widget-chrome button{width:26px;height:26px;border-radius:2px;background:rgba(255,255,255,.92);border:1px solid #E5E7EB;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748B;transition:all .12s ease;padding:0;backdrop-filter:blur(4px)}
+.dash-widget-chrome button:hover{background:#F1F5F9;color:#0F172A;border-color:#CBD5E1}
+.dash-widget-chrome .dash-widget-remove:hover{background:#FEE2E2;color:#DC2626;border-color:#FCA5A5}
+.dash-widget-drag-handle{cursor:grab;user-select:none}
+body.dash-edit-mode .dash-widget-drag-handle:active{cursor:grabbing}
+
+/* Size badge — only visible while actively resizing (centered overlay for clear feedback) */
+.dash-widget-badge{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:8;font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:700;letter-spacing:.06em;color:#fff;background:#2e5bc8;border:0;border-radius:3px;padding:8px 14px;pointer-events:none;box-shadow:0 4px 12px rgba(37,99,235,.4);align-items:center;gap:6px}
+.dash-widget.is-resizing .dash-widget-badge{display:inline-flex}
+
+/* Resize handles — 8 directions; only visible/interactive in edit mode */
+.dash-resize{display:none;position:absolute;background:transparent;z-index:7;transition:background .12s ease}
+body.dash-edit-mode .dash-resize{display:block}
+.dash-resize-e{top:14px;bottom:14px;right:-3px;width:8px;cursor:ew-resize}
+.dash-resize-w{top:14px;bottom:14px;left:-3px;width:8px;cursor:ew-resize}
+.dash-resize-s{left:14px;right:14px;bottom:-3px;height:8px;cursor:ns-resize}
+.dash-resize-n{left:14px;right:14px;top:-3px;height:8px;cursor:ns-resize}
+.dash-resize-se{right:-3px;bottom:-3px;width:14px;height:14px;cursor:nwse-resize}
+.dash-resize-sw{left:-3px;bottom:-3px;width:14px;height:14px;cursor:nesw-resize}
+.dash-resize-ne{right:-3px;top:-3px;width:14px;height:14px;cursor:nesw-resize}
+.dash-resize-nw{left:-3px;top:-3px;width:14px;height:14px;cursor:nwse-resize}
+.dash-widget:hover .dash-resize-se,.dash-widget:hover .dash-resize-sw,.dash-widget:hover .dash-resize-ne,.dash-widget:hover .dash-resize-nw{background:#b8c5e0}
+.dash-widget:hover .dash-resize-e,.dash-widget:hover .dash-resize-w{background:linear-gradient(90deg,transparent,#b8c5e0,transparent)}
+.dash-widget:hover .dash-resize-s,.dash-widget:hover .dash-resize-n{background:linear-gradient(180deg,transparent,#b8c5e0,transparent)}
+.dash-widget.is-resizing .dash-resize{background:#2e5bc8!important}
+
+/* Add tile — appears at end of grid in edit mode */
+.dash-add-tile{display:none;align-items:center;justify-content:center;border:2px dashed #b8c5e0;border-radius:2px;background:#F8FAFC;cursor:pointer;color:#2e5bc8;font-weight:500;font-size:13px;font-family:inherit;transition:background .12s ease,border-color .12s ease;letter-spacing:.01em}
+body.dash-edit-mode .dash-add-tile{display:flex}
+.dash-add-tile:hover{background:#eaeaf2;border-color:#2e5bc8}
+
+/* Add Widget palette tiles */
+.dash-palette-tile{position:relative;display:flex;flex-direction:column;gap:8px;padding:14px;border:1px solid #E5E7EB;border-radius:3px;background:#fff;cursor:pointer;text-align:left;transition:all .12s ease;font-family:inherit}
+.dash-palette-tile:hover{border-color:#2e5bc8;background:#FAFBFF}
+.dash-palette-tile.is-added{opacity:.5;cursor:default;background:#F8FAFC}
+.dash-palette-tile.is-added:hover{border-color:#E5E7EB;background:#F8FAFC}
+.dash-palette-tile-icon{width:32px;height:32px;border-radius:3px;background:#eaeaf2;color:#2e5bc8;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Dark mode for new dashboard surfaces */
+body.dark #dashboardView{background:#020617!important}
+body.dark .dash-kpi{background:#0A0A0A!important;border-color:#1A1A1A!important}
+body.dark .dash-kpi > div > span{color:#94A3B8!important}
+body.dark .dash-kpi .mono{color:#F1F5F9!important}
+body.dark .dash-widget{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark .dash-widget-chrome button{background:rgba(30,41,59,.92);border-color:#262626;color:#94A3B8}
+body.dark .dash-add-tile{background:#0A0A0A;border-color:#24479e;color:#7b9ee0}
+body.dark .dash-add-tile:hover{background:#1E1B4B}
+body.dark #dashEditBar{background:#0F1B3D!important;border-color:#1E3A8A!important;color:#93C5FD}
+
+/* Featured search bar (Customers tab) — dark mode */
+body.dark #customerSearch{background:#0A0A0A!important;border-color:#262626!important;color:#F1F5F9!important}
+body.dark #customerSearch::placeholder{color:#64748B!important}
+body.dark #customerSearch:focus{background:#0A0A0A!important}
+body.dark #customersView kbd{background:#1A1A1A!important;border-color:#262626!important;color:#94A3B8!important}
+/* Modal scaffolding */
+body.dark .modal-bg{background:rgba(0,0,0,0.7)!important}
+body.dark .modal-card{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0}
+body.dark .info-pill{background:#1A1A1A!important;color:#94A3B8!important;border-color:#262626}
+/* Configurator surfaces (quoteDetailView and project tree) */
+body.dark #quoteDetailView{background:#000000!important;color:#E2E8F0}
+body.dark #unitList button{color:#E2E8F0}
+body.dark #factoryPickerBtn{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark #factoryPickerBtn [style*="background:#F3E8FF"]{background:#3B0764!important;color:#A78BFA!important}
+#factoryPickerBtn:hover{border-color:#CBD5E1!important;box-shadow:0 1px 2px rgba(15,23,42,0.07),0 4px 10px rgba(15,23,42,0.08)!important}
+/* Customer detail / order detail body card text */
+body.dark #customerDetail [style*="color:#0A0A0A"],body.dark #orderDetail [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #customerDetail [style*="color:#404040"],body.dark #orderDetail [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #customerDetail [style*="color:#64748B"],body.dark #orderDetail [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #customerDetail [style*="color:#94A3B8"],body.dark #orderDetail [style*="color:#94A3B8"]{color:#64748B!important}
+body.dark #customersView tbody [style*="color:#0A0A0A"],body.dark #ordersView tbody [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark #customersView tbody [style*="color:#404040"],body.dark #ordersView tbody [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark #customersView tbody [style*="color:#64748B"],body.dark #ordersView tbody [style*="color:#64748B"]{color:#94A3B8!important}
+body.dark #customersView tbody [style*="background:#eaeaf2"],body.dark #ordersView tbody [style*="background:#eaeaf2"]{background:#0E1638!important}
+body.dark #customersView tbody [style*="background:#FAFBFC"],body.dark #ordersView tbody [style*="background:#FAFBFC"]{background:#1A1A1A!important}
+body.dark #customersView tbody [style*="background:#d6dff4"]{background:#1E3A8A!important;color:#b8c5e0!important}
+/* Segment (chip) bar in customer/order toolbar - medium-toned in dark */
+body.dark #customerSegmentBar,body.dark #ordersTabs{background:#1A1A1A!important}
+/* Filter inputs label */
+body.dark [data-options-search]{background:#0A0A0A!important;border-color:#262626!important;color:#E2E8F0!important}
+body.dark [data-options-toggle]{background:#0A0A0A!important;border-color:#262626!important;color:#94A3B8!important}
+body.dark [data-options-toggle]:hover{background:#1A1A1A!important;color:#E2E8F0!important}
+/* Settings view dark mode */
+body.dark #settingsView{background:#000000!important;color:#E2E8F0}
+body.dark #settingsView [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E2E8F0!important}
+body.dark #settingsView [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #settingsView h1,body.dark #settingsView h2,body.dark #settingsView h3{color:#F1F5F9!important}
+/* TopBars */
+body.dark [data-surf="topbar"] [style*="background:#fff"]{background:#1A1A1A!important}
+body.dark [data-surf="topbar"] [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark [data-surf="topbar"] [style*="color:#0A0A0A"]{color:#F1F5F9!important}
+body.dark [data-surf="topbar"] [style*="color:#404040"]{color:#CBD5E1!important}
+body.dark [data-surf="topbar"] [style*="color:#64748B"]{color:#94A3B8!important}
+/* Quote configurator main content */
+body.dark #quoteDetailView [data-surf="topbar"]{background:rgba(15,23,42,0.92)!important;border-bottom-color:#1A1A1A!important}
+body.dark .toast{background:#0A0A0A!important;border-color:#262626!important;color:#F1F5F9}
+body.dark .pulse{background:#10B981}
+.toggle{position:relative;display:inline-flex;width:38px;height:22px;background:#CBD5E1;border-radius:3px;cursor:pointer;transition:background .2s;border:none;padding:0;flex-shrink:0}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;background:#fff;border-radius:3px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on{background:#4a6fd4}
+.toggle.on::after{transform:translateX(16px)}
+body.dark .toggle{background:#262626}
+body.dark .toggle.on{background:#4a6fd4}
+.del-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:2px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #FCA5A5;background:#FEF2F2;color:#B91C1C;font-family:inherit;transition:all .15s}
+.del-btn:hover{background:#FEE2E2;border-color:#F87171}
+body.dark .del-btn{background:#3B1620;border-color:#7F1D1D;color:#FCA5A5}
+body.dark .del-btn:hover{background:#4C1D26;border-color:#991B1B}
+
+/* ═════════════════════════════════════════════════════════════════════
+   DARK MODE — UNIVERSAL CATCH-ALL
+   ─────────────────────────────────────────────────────────────────────
+   Final-pass rules that apply to EVERY view, including any that don't
+   have explicit dark-mode styling above. Uses neutral near-black palette
+   (no blue tint) so the entire app feels consistent. These rules use
+   broad attribute selectors so they catch inline-styled elements anywhere
+   in the DOM — adding a new view doesn't require new dark-mode CSS.
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* Page-level surfaces — every named view gets a true-black background */
+body.dark #quotesListView,body.dark #quotesView,body.dark #catalogView{background:#000!important;color:#E5E5E5}
+body.dark #quotesListView > div:first-child,body.dark #quotesView > div:first-child,body.dark #catalogView > div:first-child{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important}
+body.dark #quotesListView h1,body.dark #quotesView h1,body.dark #catalogView h1{color:#F5F5F5!important}
+
+/* Quotes list table */
+body.dark #quotesListView table,body.dark #quotesView table{background:#0A0A0A!important;color:#E5E5E5}
+body.dark #quotesListView thead tr,body.dark #quotesView thead tr{background:#1A1A1A!important;border-bottom-color:#262626!important}
+body.dark #quotesListView thead th,body.dark #quotesView thead th{color:#A3A3A3!important}
+body.dark #quotesListView tbody tr,body.dark #quotesView tbody tr{border-top-color:#1A1A1A!important;color:#E5E5E5}
+body.dark #quotesListView tbody tr td,body.dark #quotesView tbody tr td{color:#E5E5E5}
+
+/* Catalog families/products */
+body.dark #catalogView [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+body.dark #catalogView [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #catalogView [style*="background:#FAFBFC"]{background:#000!important;border-color:#1A1A1A!important}
+
+/* Inline-styled white-bg elements anywhere in dark views — catch-all */
+body.dark #quotesListView [style*="background:#fff"],body.dark #quotesView [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+body.dark #quotesListView select,body.dark #quotesView select,body.dark #catalogView select{background:#0A0A0A!important;border-color:#262626!important;color:#E5E5E5!important}
+body.dark #quotesListView input,body.dark #quotesView input,body.dark #catalogView input{background:#0A0A0A!important;border-color:#262626!important;color:#E5E5E5!important}
+body.dark #quotesListView input::placeholder,body.dark #quotesView input::placeholder,body.dark #catalogView input::placeholder{color:#525252!important}
+
+/* Universal text-color overrides — same pattern as existing rules but extended */
+body.dark #quotesListView [style*="color:#0F172A"],body.dark #quotesView [style*="color:#0F172A"],body.dark #catalogView [style*="color:#0F172A"]{color:#F5F5F5!important}
+body.dark #quotesListView [style*="color:#404040"],body.dark #quotesView [style*="color:#404040"],body.dark #catalogView [style*="color:#404040"]{color:#D4D4D4!important}
+body.dark #quotesListView [style*="color:#64748B"],body.dark #quotesView [style*="color:#64748B"],body.dark #catalogView [style*="color:#64748B"]{color:#A3A3A3!important}
+
+/* Order Detail panel inline tabs (Messages/Docs) */
+body.dark #orderDetail [style*="background:#FAFBFC"]{background:#0A0A0A!important;border-color:#1A1A1A!important}
+body.dark #orderDetail [style*="background:#F5F3FF"]{background:#1A1535!important;border-color:#3F2B7A!important;color:#C4B5FD!important}
+body.dark #orderDetail [style*="background:#DDD6FE"]{background:#3F2B7A!important;color:#C4B5FD!important}
+body.dark #orderDetail [style*="background:#FEF3C7"]{background:#3F2D0E!important;color:#FCD34D!important}
+body.dark #orderInlineThread{background:#000!important;border-color:#1A1A1A!important}
+body.dark #orderInlineInput{background:transparent!important;color:#E5E5E5!important}
+
+/* App-wide top nav and frame chrome */
+body.dark{background:#000!important}
+body.dark .app{background:#000!important}
+body.dark #topNav{background:#0A0A0A!important;border-bottom-color:#1A1A1A!important}
+body.dark #topNav button{color:#A3A3A3!important}
+body.dark #topNav button:hover{background:#1A1A1A!important;color:#F5F5F5!important}
+
+/* Modals — generic overrides for ANY modal content */
+body.dark .modal-bg [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+body.dark .modal-bg [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark .modal-bg [style*="background:#FAFBFC"]{background:#000!important;border-color:#1A1A1A!important}
+body.dark .modal-bg [style*="color:#0F172A"]{color:#F5F5F5!important}
+body.dark .modal-bg [style*="color:#404040"]{color:#D4D4D4!important}
+body.dark .modal-bg [style*="color:#64748B"]{color:#A3A3A3!important}
+
+/* Order chat / docs modals */
+body.dark #orderChatModal [style*="background:#fff"],body.dark #orderDocsModal [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+body.dark #orderChatModal [style*="background:#FAFBFC"],body.dark #orderDocsModal [style*="background:#FAFBFC"]{background:#000!important;border-color:#1A1A1A!important}
+body.dark #orderChatModal textarea,body.dark #orderDocsModal input{background:#0A0A0A!important;border-color:#262626!important;color:#E5E5E5!important}
+
+/* Light-bg utility surfaces wherever they appear */
+body.dark [style*="background:#F1F5F9"]{background:#1A1A1A!important}
+body.dark [style*="background:#E2E8F0"]{background:#262626!important}
+body.dark [style*="background:#CBD5E1"]{background:#404040!important}
+body.dark [style*="border-color:#E2E8F0"]{border-color:#1A1A1A!important}
+body.dark [style*="border:1px solid #E2E8F0"]{border-color:#1A1A1A!important}
+body.dark [style*="border:1px solid #F1F5F9"]{border-color:#1A1A1A!important}
+body.dark [style*="border-bottom:1px solid #F1F5F9"]{border-bottom-color:#1A1A1A!important}
+body.dark [style*="border-top:1px solid #F1F5F9"]{border-top-color:#1A1A1A!important}
+
+/* ═════════════════════════════════════════════════════════════════════
+   CONFIGURATOR (#quotesView) — comprehensive dark mode coverage
+   ─────────────────────────────────────────────────────────────────────
+   The configurator has many specialized inline-styled panels (project tree,
+   center viewport, exterior options column, interior options column) that
+   weren't all picked up by generic catch-alls. Explicit ID-targeted rules
+   ensure every white surface flips to near-black in dark mode.
+   ═════════════════════════════════════════════════════════════════════ */
+body.dark #quotesView{background:#000!important;color:#E5E5E5!important}
+body.dark #quotesView main{background:#000!important}
+body.dark #quotesView aside{background:#0A0A0A!important;color:#E5E5E5!important}
+body.dark #quotesView aside [style*="background:#fff"]{background:#0A0A0A!important;color:#E5E5E5!important}
+body.dark #quotesView main [style*="background:#fff"]{background:#0A0A0A!important;color:#E5E5E5!important}
+body.dark #quotesView main [style*="background:#FFFFFF"]{background:#000!important}
+body.dark #quotesView [style*="background:#FAFBFC"]{background:#000!important;border-color:#1A1A1A!important}
+body.dark #quotesView [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #quotesView [style*="background:#F1F5F9"]{background:#1A1A1A!important}
+body.dark #quotesView [style*="background:#F5F8FD"]{background:#1A1A1A!important}
+/* Linear gradient from light blue to white — flip to dark equivalents */
+body.dark #quotesView [style*="linear-gradient(180deg,#F5F8FD"]{background:linear-gradient(180deg,#1A1A1A 0%,#0A0A0A 100%)!important}
+body.dark #quotesView [style*="linear-gradient(180deg,#F5F8FD 0%,#FAFBFC 110px,#FAFBFC 100%)"]{background:linear-gradient(180deg,#1A1A1A 0%,#000 110px,#000 100%)!important}
+body.dark #quotesView [style*="linear-gradient(180deg,#FFFBEB"]{background:linear-gradient(180deg,#3F2D0E 0%,#1A1A1A 100%)!important}
+body.dark #quotesView [style*="linear-gradient(90deg,#eaeaf2"]{background:linear-gradient(90deg,#0E1638 0%,#1A1A1A 100%)!important}
+body.dark #quotesView [style*="background:#FFFFFF"]{background:#000!important}
+
+/* Center viewport (#viewport) — already handled but reinforce */
+body.dark #viewport{background:#050505!important}
+body.dark #viewport [style*="background:#fff"]{background:#0A0A0A!important;color:#E5E5E5!important}
+
+/* Exterior + Interior option panels — wide white-bg containers */
+body.dark #exteriorPanel,body.dark #interiorPanel{background:#000!important;color:#E5E5E5!important}
+body.dark #exteriorPanel [style*="background:#fff"],body.dark #interiorPanel [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+body.dark #exteriorPanel [style*="background:#F8FAFC"],body.dark #interiorPanel [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+
+/* Universal text overrides scoped to configurator */
+body.dark #quotesView [style*="color:#0F172A"]{color:#F5F5F5!important}
+body.dark #quotesView [style*="color:#475569"]{color:#D4D4D4!important}
+body.dark #quotesView [style*="color:#64748B"]{color:#A3A3A3!important}
+body.dark #quotesView [style*="color:#94A3B8"]{color:#737373!important}
+body.dark #quotesView [style*="border-color:#E2E8F0"]{border-color:#262626!important}
+body.dark #quotesView [style*="border:1px solid #E2E8F0"]{border-color:#262626!important}
+body.dark #quotesView [style*="border-bottom:1px solid #E2E8F0"]{border-bottom-color:#262626!important}
+body.dark #quotesView [style*="border-right:1px solid #E2E8F0"]{border-right-color:#262626!important}
+body.dark #quotesView [style*="border-top:1px solid #E2E8F0"]{border-top-color:#262626!important}
+body.dark #quotesView [style*="border:1px solid #F1F5F9"]{border-color:#1A1A1A!important}
+body.dark #quotesView [style*="border-top:1px solid #F1F5F9"]{border-top-color:#1A1A1A!important}
+body.dark #quotesView [style*="border-bottom:1px solid #F1F5F9"]{border-bottom-color:#1A1A1A!important}
+
+/* Inputs and selects */
+body.dark #quotesView input,body.dark #quotesView select,body.dark #quotesView textarea{background:#0A0A0A!important;border-color:#262626!important;color:#E5E5E5!important}
+body.dark #quotesView input::placeholder,body.dark #quotesView textarea::placeholder{color:#525252!important}
+
+/* Light-tint info pills and chips */
+body.dark #quotesView [style*="background:#d6dff4"]{background:#1E3A8A!important;color:#b8c5e0!important}
+body.dark #quotesView [style*="background:#eaeaf2"]{background:#0E1638!important;border-color:#1E3A8A!important;color:#b8c5e0!important}
+body.dark #quotesView [style*="background:#F0FDF4"]{background:#052E1B!important;border-color:#14532D!important;color:#86EFAC!important}
+body.dark #quotesView [style*="background:#FEF3C7"]{background:#3F2D0E!important;border-color:#78350F!important;color:#FCD34D!important}
+body.dark #quotesView [style*="background:#FEF2F2"]{background:#3B1620!important;border-color:#7F1D1D!important;color:#FCA5A5!important}
+
+/* Quote detail panel — explicit ID targeting since the element-level
+   inline background:#fff is wide and shows through any gaps in content */
+body.dark #quoteDetail{background:#0A0A0A!important;color:#E5E5E5!important}
+body.dark #quoteDetail [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+body.dark #quoteDetail [style*="background:#FAFBFC"]{background:#000!important;border-color:#1A1A1A!important}
+body.dark #quoteDetail [style*="background:#F8FAFC"]{background:#1A1A1A!important;border-color:#262626!important}
+body.dark #quoteDetail [style*="background:#F1F5F9"]{background:#1A1A1A!important}
+body.dark #quoteDetail [style*="background:#eaeaf2"]{background:#0E1638!important;border-color:#1E3A8A!important;color:#b8c5e0!important}
+body.dark #quoteDetail [style*="background:#F0FDF4"]{background:#052E1B!important;border-color:#14532D!important;color:#86EFAC!important}
+body.dark #quoteDetail [style*="color:#0F172A"]{color:#F5F5F5!important}
+body.dark #quoteDetail [style*="color:#404040"]{color:#D4D4D4!important}
+body.dark #quoteDetail [style*="color:#64748B"]{color:#A3A3A3!important}
+body.dark #quoteDetail [style*="color:#94A3B8"]{color:#737373!important}
+body.dark #quoteDetail input,body.dark #quoteDetail select,body.dark #quoteDetail textarea{background:#0A0A0A!important;border-color:#262626!important;color:#E5E5E5!important}
+body.dark #quoteDetail input::placeholder,body.dark #quoteDetail textarea::placeholder{color:#525252!important}
+body.dark #quoteDetail [style*="border-color:#E2E8F0"],body.dark #quoteDetail [style*="border:1px solid #E2E8F0"]{border-color:#262626!important}
+body.dark #quoteDetail [style*="border-bottom:1px solid #E2E8F0"]{border-bottom-color:#262626!important}
+body.dark #quoteDetail [style*="border-top:1px solid #F1F5F9"]{border-top-color:#1A1A1A!important}
+body.dark #quoteDetail [style*="border-bottom:1px solid #F1F5F9"]{border-bottom-color:#1A1A1A!important}
+
+/* Quotes list left column — the master list container; match its FAFBFC bg */
+body.dark #quotesListView > div:last-child > div:first-child{background:#000!important;border-right-color:#1A1A1A!important}
+body.dark #quotesListView > div:last-child > div:first-child > div[style*="background:#FAFBFC"]{background:#000!important}
+
+/* Order detail panel — same explicit treatment for symmetry */
+body.dark #orderDetail{background:#0A0A0A!important;color:#E5E5E5!important}
+body.dark #orderDetail [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+body.dark #orderDetail [style*="background:#FAFBFC"]{background:#000!important;border-color:#1A1A1A!important}
+
+/* Customer detail panel — same explicit treatment for symmetry */
+body.dark #customerDetail{background:#0A0A0A!important;color:#E5E5E5!important}
+body.dark #customerDetail [style*="background:#fff"]{background:#0A0A0A!important;border-color:#1A1A1A!important;color:#E5E5E5!important}
+
+nav button{font-family:inherit}
+
+/* ── Settings & Additional Component Styles ── */
+
+.settings-tab{padding:9px 14px;font-size:13px;font-weight:500;color:#64748B;background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;margin-bottom:-1px;transition:color .15s,border-color .15s}
+.settings-tab:hover{color:#0F172A}
+.settings-tab.active{color:#2e5bc8;border-bottom-color:#2e5bc8}
+.set-card{background:#fff;border:1px solid #E2E8F0;border-radius:3px;padding:22px;margin-bottom:16px}
+.set-card h3{margin:0 0 4px;font-size:15px;font-weight:600;color:#0F172A}
+.set-card p.set-desc{margin:0 0 18px;font-size:13px;color:#64748B}
+.set-row{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:flex-start;padding:14px 0;border-top:1px solid #F1F5F9}
+.set-row:first-of-type{border-top:none}
+.set-row label.set-lbl{font-size:13px;font-weight:500;color:#0F172A;padding-top:8px}
+.set-row .set-help{font-size:11px;color:#94A3B8;margin-top:4px;font-weight:400}
+.editable-text{cursor:text;border-bottom:1px dashed transparent;transition:border-color .15s,background .15s;padding:1px 4px;margin:-1px -4px;border-radius:3px}
+.editable-text:hover{border-bottom-color:#CBD5E1;background:#F8FAFC}
+.editable-text:focus{outline:none;border-bottom-color:#2e5bc8;background:#eaeaf2}
+.editable-text:focus-visible{outline:2px solid #b8c5e0;outline-offset:2px}
+.editable-text:empty:before{content:attr(data-placeholder);color:#CBD5E1;font-style:italic}
+[data-term-remove-pdf]:hover{background:#FEE2E2 !important;border-color:#FCA5A5 !important;color:#DC2626 !important}
+div:hover > .term-remove-btn{opacity:1}
+div:hover > [data-term-remove-pdf]{opacity:1}
+.sig-clickable{position:relative}
+.sig-clickable:hover{background:#F8FAFC !important}
+@keyframes savedPop{0%{opacity:0;transform:translateY(4px) scale(0.92)}15%{opacity:1;transform:translateY(0) scale(1)}80%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-3px) scale(0.96)}}
+@keyframes sigPad{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}

@@ -310,6 +310,75 @@ export default function WindowViewer({
     if (s.dimGroup) { s.scene.remove(s.dimGroup); s.dimGroup = null; }
     s.frameMaterials = [];
 
+    // ─── Reusable fallback builder ───
+    const buildFallbackWindow = () => {
+      // Clear any previous model first
+      if (s.currentModel) { s.scene.remove(s.currentModel); s.currentModel = null; }
+
+      const group = new THREE.Group();
+      const fw = 1.8, fh = 2.4, fd = 0.12, ft = 0.1;
+
+      const frameMat = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(colourRef.current?.hex || '#FAFAFA'),
+        roughness: 0.55, metalness: 0.0, envMapIntensity: 0.4,
+        clearcoat: 0.08, clearcoatRoughness: 0.5,
+      });
+      const glassMat = new THREE.MeshPhysicalMaterial({
+        color: 0xe8f4ff, transparent: true, opacity: 0.12,
+        roughness: 0.05, metalness: 0.0, envMapIntensity: 1.2,
+        transmission: 0.85,
+      });
+
+      // Frame pieces (top, bottom, left, right)
+      const topBar = new THREE.Mesh(new THREE.BoxGeometry(fw, ft, fd), frameMat);
+      topBar.position.set(0, fh / 2 - ft / 2, 0);
+      group.add(topBar);
+      const botBar = new THREE.Mesh(new THREE.BoxGeometry(fw, ft, fd), frameMat);
+      botBar.position.set(0, -fh / 2 + ft / 2, 0);
+      group.add(botBar);
+      const leftBar = new THREE.Mesh(new THREE.BoxGeometry(ft, fh, fd), frameMat);
+      leftBar.position.set(-fw / 2 + ft / 2, 0, 0);
+      group.add(leftBar);
+      const rightBar = new THREE.Mesh(new THREE.BoxGeometry(ft, fh, fd), frameMat);
+      rightBar.position.set(fw / 2 - ft / 2, 0, 0);
+      group.add(rightBar);
+
+      // Center mullion (vertical)
+      const mullion = new THREE.Mesh(new THREE.BoxGeometry(ft * 0.7, fh - ft * 2, fd), frameMat);
+      mullion.position.set(0, 0, 0);
+      group.add(mullion);
+
+      // Glass panes (left and right)
+      const gw = (fw - ft * 2 - ft * 0.7) / 2;
+      const gh = fh - ft * 2;
+      const glassL = new THREE.Mesh(new THREE.BoxGeometry(gw, gh, 0.01), glassMat);
+      glassL.position.set(-gw / 2 - ft * 0.35 / 2, 0, 0);
+      group.add(glassL);
+      const glassR = new THREE.Mesh(new THREE.BoxGeometry(gw, gh, 0.01), glassMat);
+      glassR.position.set(gw / 2 + ft * 0.35 / 2, 0, 0);
+      group.add(glassR);
+
+      // Handle (small box on left frame)
+      const handleMat = new THREE.MeshStandardMaterial({ color: 0xc0c5cc, metalness: 0.7, roughness: 0.3 });
+      const handle = new THREE.Mesh(new THREE.BoxGeometry(0.025, 0.12, 0.04), handleMat);
+      handle.position.set(-fw / 2 + ft + 0.01, 0, fd / 2 + 0.02);
+      group.add(handle);
+
+      group.position.set(0, 0.15, 0);
+      s.currentModel = group;
+      s.scene.add(group);
+      s.frameMaterials = [frameMat];
+      s.needsRender = true; s.dampingFrames = 30;
+      if (loadingRef.current) { loadingRef.current.style.opacity = '0'; loadingRef.current.style.pointerEvents = 'none'; }
+      onLoaded?.();
+    };
+
+    // ─── FALLBACK: Show procedural window when no dimensions set ───
+    if (!useProcedural) {
+      buildFallbackWindow();
+      return;
+    }
+
     /* ─── Helpers ─── */
     const makeTextSprite = (text, fontSize = 28, color = '#777777') => {
       const cvs = document.createElement('canvas');
@@ -416,11 +485,11 @@ export default function WindowViewer({
     // conventions and bind-pose styles are handled below.
     const RIGGED_SOURCE_BY_TYPE = {
       casement: '/windows/casement/Casement.glb',
-      awning: '/windows/awning/AwningWindow_Rigged_v2.glb',
-      picture: '/windows/picture/PictureWindow_Rigged_v2.glb',
-      'high-fix': '/windows/high-fix/HighFixWindow_Rigged_v2.glb',
-      highfix: '/windows/high-fix/HighFixWindow_Rigged_v2.glb',
-      fixed: '/windows/picture/FixedWindow_Rigged_v2.glb',
+      awning: '/windows/casement/Casement.glb',
+      picture: '/windows/casement/Casement.glb',
+      'high-fix': '/windows/casement/Casement.glb',
+      highfix: '/windows/casement/Casement.glb',
+      fixed: '/windows/casement/Casement.glb',
     };
 
     // Rigs whose meshes & bones are authored directly in INCHES. For these
@@ -976,12 +1045,7 @@ export default function WindowViewer({
             baseFailed = true;
             console.error(`Rigged-window assembly load failed (${path}):`, err);
             if (loadingTextRef.current) loadingTextRef.current.textContent = 'Error loading model';
-            setTimeout(() => {
-              if (loadingRef.current) {
-                loadingRef.current.style.opacity = '0';
-                loadingRef.current.style.pointerEvents = 'none';
-              }
-            }, 2000);
+            buildFallbackWindow();
           },
         );
       };
@@ -1064,48 +1128,48 @@ export default function WindowViewer({
       // Map each cell type to its component directory and files
       const COMP_MAP = {
         'single-hung': {
-          base: '/windows/single-hung/components/',
-          files: ['frame.glb', 'sash_or_other.glb', 'meeting_rail.glb', 'hardware.glb', 'glass.glb'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'double-hung': {
-          base: '/windows/double-hung/components/',
-          files: ['sash_or_other.glb', 'meeting_rail.glb', 'hardware.glb', 'glass.glb'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'single-slider': {
-          base: '/windows/single-slider/components/',
-          files: ['sash_or_other.glb', 'meeting_rail_vertical.glb', 'glass.glb'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'double-slider': {
-          base: '/windows/double-slider/components/',
-          files: ['sash_or_other.glb', 'meeting_rail_vertical.glb', 'hardware.glb', 'glass.glb'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'end-vent': {
-          base: '/windows/end-vent/components/',
-          files: ['sash_or_other.glb', 'glass.glb'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'awning': {
-          base: '/windows/awning/',
-          files: ['AwningWindow.glb'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'casement': {
           base: '/windows/casement/',
-          files: ['CasementWindow.gltf'],
+          files: ['Casement.glb'],
         },
         'picture': {
-          base: '/windows/picture/',
-          files: ['PictureWindow_Model_1.gltf'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'high-fix': {
-          base: '/windows/high-fix/',
-          files: ['HighFixWindow_DoubleGlazing.gltf'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'highfix': {
-          base: '/windows/high-fix/',
-          files: ['HighFixWindow_DoubleGlazing.gltf'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
         'fixed': {
-          base: '/windows/picture/',
-          files: ['PictureWindow_Model_1.gltf'],
+          base: '/windows/casement/',
+          files: ['Casement.glb'],
         },
       };
 
@@ -1607,8 +1671,7 @@ export default function WindowViewer({
       (xhr) => { if (xhr.total && loadingTextRef.current) loadingTextRef.current.textContent = 'Loading... ' + Math.round((xhr.loaded / xhr.total) * 100) + '%'; },
       (err) => {
         console.error('Model load error:', err);
-        if (loadingTextRef.current) loadingTextRef.current.textContent = 'Error loading model';
-        setTimeout(() => { if (loadingRef.current) { loadingRef.current.style.opacity = '0'; loadingRef.current.style.pointerEvents = 'none'; } }, 2000);
+        buildFallbackWindow();
       }
     );
   }, [modelPath, typeId, onLoaded, gridKey]);

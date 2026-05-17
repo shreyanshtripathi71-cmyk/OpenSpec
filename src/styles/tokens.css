@@ -1,32 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
-   DESIGN TOKENS
+   DESIGN TOKENS — OpenSpec v23.4 enterprise palette
    ═══════════════════════════════════════════════════════════════
-
-   Single source of truth for every visual primitive used by the
-   application: spacing radii, surface colors, ink colors, glass
-   tints, shadow stacks, motion easings. Every
-   component reads these via `var(--token-name)` so a designer
-   can theme the whole product by editing this file alone.
-
-   These are global CSS variables — NOT a CSS Module. Imported
-   once from main.jsx, available everywhere without `composes:`.
-*/
+   Flat enterprise design system. No glassmorphism, no blur,
+   no translucent surfaces. Matches the OpenSpec HTML exactly. */
 
 :root {
-  /* ── Surface fills (used for the static glass background tint) ── */
-  --surface:   rgba(255, 255, 255, 0.38);
-  --surface-2: rgba(255, 255, 255, 0.32);
-  --surface-3: rgba(255, 255, 255, 0.38);
-  --surface-4: rgba(255, 255, 255, 0.42);
-
-  /* ── Glass tints (regular CSS fills; no live backdrop sampling) ── */
-  --glass-1: rgba(210, 210, 218, 0.40);
-  --glass-2: rgba(210, 210, 218, 0.35);
-  --glass-3: rgba(210, 210, 218, 0.40);
-  --glass-4: rgba(210, 210, 218, 0.45);
-  --glass-5: rgba(210, 210, 218, 0.50);
-
-  /* ── Ink (text colours, light theme) ── */
+  /* ── Ink (text colours) ── */
   --ink:        #0F172A;
   --ink-2:      #0F172A;
   --ink-3:      #475569;
@@ -34,57 +13,28 @@
   --ink-faint:  #94A3B8;
   --ink-ghost:  #CBD5E1;
 
-  /* ── Hairlines, borders, rim highlights ── */
-  --border:         rgba(255, 255, 255, 0.35);
-  --border-soft:    rgba(255, 255, 255, 0.25);
-  --border-strong:  rgba(255, 255, 255, 0.50);
-  --hairline:       rgba(255, 255, 255, 0.25);
-  --hairline-soft:  rgba(255, 255, 255, 0.18);
-  --rim:            rgba(255, 255, 255, 0.40);
-  --rim-strong:     rgba(255, 255, 255, 0.55);
-
   /* ── Accents + status colours ── */
-  --accent:         #2563EB;
-  --accent-soft:    rgba(37, 99, 235, 0.10);
-  --accent-strong:  #1D4ED8;
+  --accent:         #2e5bc8;
+  --accent-soft:    #EFF6FF;
+  --accent-strong:  #2651b3;
   --good:           #15803D;
-  --good-soft:      rgba(4, 120, 87, 0.10);
-  --warn:           #e8a13a;
-  --warn-soft:      #b453091a;
-  --danger:         #e23b3b;
-  --danger-soft:    #dc26261a;
-  --gold:           #92400e;
+  --good-soft:      #F0FDF4;
+  --warn:           #D97706;
+  --warn-soft:      #FFFBEB;
+  --danger:         #DC2626;
+  --danger-soft:    #FEF2F2;
 
-  /* ── Radii ── */
-  --r-xs:  10px;
-  --r-sm:  12px;
-  --r-md:  14px;
-  --r-lg:  14px;
-  --r-xl:  18px;
-  --r-2xl: 22px;
-  --r-3xl: 28px;
+  /* ── Radii — small, boxy ── */
+  --r-xs:  2px;
+  --r-sm:  2px;
+  --r-md:  3px;
+  --r-lg:  3px;
 
-  /* ── Box-shadow primitives (inside-out edge + outside drop) ── */
-  --shine:        inset 0 1px 0 rgba(255, 255, 255, 0.55),
-                  inset 0 -0.5px 0 rgba(0, 0, 0, 0.04);
-  --shine-strong: inset 0 1px 0 rgba(255, 255, 255, 0.65),
-                  inset 1px 0 0 rgba(255, 255, 255, 0.30);
-  --shadow-xs: 0 1px 1px rgba(15, 23, 42, 0.04);
-  --shadow-sm: 0 1px 1px rgba(15, 23, 42, 0.04),
-               0 2px 6px -2px rgba(15, 23, 42, 0.08);
-  --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0.55),
-               0 1px 2px rgba(15, 23, 42, 0.05),
-               0 4px 14px -4px rgba(15, 23, 42, 0.10);
-  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.55),
-               0 1px 2px rgba(15, 23, 42, 0.05),
-               0 8px 24px -8px rgba(15, 23, 42, 0.14);
-  --shadow-xl: inset 0 1px 0 rgba(255, 255, 255, 0.55),
-               0 1px 2px rgba(15, 23, 42, 0.06),
-               0 12px 32px -8px rgba(15, 23, 42, 0.18);
+  /* ── Shadows — minimal, flat ── */
+  --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06), 0 4px 12px rgba(15, 23, 42, 0.06);
 
-  /* ── Motion easings (curves picked to match iOS) ── */
-  --t-fast: .14s cubic-bezier(.4, 0, .2, 1);
-  --t-base: .22s cubic-bezier(.4, 0, .2, 1);
-  --t-slow: .34s cubic-bezier(.32, .72, 0, 1);
+  /* ── Motion — fast, subtle ── */
+  --t-fast: .15s ease;
+  --t-base: .2s ease;
 }
-

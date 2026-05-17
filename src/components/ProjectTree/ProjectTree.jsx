@@ -50,7 +50,7 @@ export function ProjectTree({
         className={styles.projTreePinBtn}
         type="button"
         onClick={() => setTreePinned(false)}
-        title="Close project panel"
+        title="Close Project Panel"
         aria-label="Close project panel"
       >
         <svg width="11" height="11" viewBox="0 0 16 16" fill="none">
@@ -94,7 +94,7 @@ export function ProjectTree({
         <button
           type="button"
           className={styles.projTreeRailItem}
-          title="Add unit"
+          title="Add Unit"
           onClick={() => setTreePinned(true)}
         >
           <PlusIcon />
@@ -200,8 +200,8 @@ export function ProjectTree({
                     </span>
                   </span>
                   <span className={styles.projUnitActions} onClick={(e) => e.stopPropagation()}>
-                    <button type="button" title="Duplicate unit" onClick={() => onDuplicateUnit(u.id)}>⧉</button>
-                    <button type="button" title="Delete unit" onClick={() => onDeleteUnit(u.id)}>×</button>
+                    <button type="button" title="Duplicate Unit" onClick={() => onDuplicateUnit(u.id)}>⧉</button>
+                    <button type="button" title="Delete Unit" onClick={() => onDeleteUnit(u.id)}>×</button>
                   </span>
                 </div>
               );})}

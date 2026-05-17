@@ -1,42 +1,20 @@
-/* Breadcrumb row that sits just below the OsNav top bar. Capsule
-   glass surface with: back link + quote # + unit + spec chip on the
-   left; saved indicator + lock toggle + View-PDF + Save & close on
-   the right. */
+/* Breadcrumb row — OpenSpec v23.4 enterprise style.
+   Flat white bar, sharp corners, no glassmorphism. */
 .osBcRow {
-  composes: glassCard from '../../styles/glass.module.css';
   position: relative;
   z-index: 59;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 10px 14px;
-  border-radius: 999px;
-  gap: 10px;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #E2E8F0;
+  flex-wrap: wrap;
+  gap: 8px;
 }
-.osBcRow::before {
-  content: "";
-  position: absolute;
-  inset: 3px;
-  border-radius: 999px;
-  pointer-events: none;
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0) 18%,
-    rgba(255, 255, 255, 0) 82%, rgba(255, 255, 255, 0.22) 100%);
-  box-shadow: 0 0 0 0.5px rgba(255, 255, 255, 0.55) inset;
-  z-index: 0;
-}
-.osBcRow::after {
-  content: "";
-  position: absolute;
-  left: 6%; right: 35%; top: 1px;
-  height: 38%;
-  background: radial-gradient(120% 100% at 20% 0%,
-    rgba(255, 255, 255, 0.70) 0%, rgba(255, 255, 255, 0.25) 30%, rgba(255, 255, 255, 0) 70%);
-  border-radius: 999px 999px 80% 80% / 100px 100px 100% 100%;
-  pointer-events: none;
-  z-index: 0;
-}
+.osBcRow::before { display: none; }
+.osBcRow::after  { display: none; }
 .osBcRow > * { position: relative; z-index: 1; }
 
 .osBcLeftRow {
@@ -54,48 +32,44 @@
   flex-shrink: 0;
 }
 
-/* All right-cluster buttons share the same soft-glass pill recipe so
-   the breadcrumb reads as one consistent control strip (matches the
-   OsNav profile/theme pills above it). */
-
 /* Left side */
 .osBcBackBtn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 11.5px;
-  color: var(--ink-mute);
+  font-size: 12px;
+  color: #64748B;
   font-weight: 500;
   text-decoration: none;
-  padding: 5px 11px 5px 9px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.60);
-  border: 1px solid rgba(15, 23, 42, 0.06);
+  padding: 4px 10px;
+  border-radius: 2px;
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
   transition: background .14s, color .14s;
 }
 .osBcBackBtn:hover {
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--ink);
+  background: #FFFFFF;
+  color: #0F172A;
 }
 
 .osBcQuote {
   font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 12px;
   font-weight: 600;
-  color: var(--ink);
-  background: rgba(241, 245, 249, 0.78);
-  border: 1px solid rgba(15, 23, 42, 0.05);
-  padding: 3px 11px;
-  border-radius: 999px;
+  color: #0F172A;
+  background: #F1F5F9;
+  border: 1px solid #E2E8F0;
+  padding: 3px 10px;
+  border-radius: 3px;
 }
 .osBcDivider {
-  color: var(--ink-ghost);
+  color: #CBD5E1;
   font-size: 12px;
 }
 .osBcUnit {
   font-size: 13px;
   font-weight: 500;
-  color: var(--ink);
+  color: #0F172A;
   letter-spacing: -0.005em;
 }
 .osBcSpec {
@@ -103,23 +77,13 @@
   align-items: center;
   font-size: 11px;
   font-weight: 600;
-  color: var(--ink-2);
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.85) 0%,
-    rgba(255, 255, 255, 0.55) 55%,
-    rgba(255, 255, 255, 0.70) 100%);
-  box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.95) inset,
-    0 1.5px 0   rgba(255, 255, 255, 0.90) inset,
-    0 -1px 0    rgba(255, 255, 255, 0.40) inset,
-    0 0 0 1px   rgba(60, 75, 110, 0.06),
-    0 6px 18px -6px   rgba(20, 35, 80, 0.18),
-    0 16px 40px -12px rgba(20, 35, 80, 0.15);
+  color: #2651b3;
+  padding: 4px 10px;
+  border-radius: 3px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
   margin-left: 4px;
   white-space: nowrap;
-  border: none;
 }
 
 /* Right side */
@@ -127,16 +91,15 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 11.5px;
-  color: var(--good);
+  font-size: 11px;
+  color: #15803D;
   font-weight: 500;
 }
 .osBcSaveDot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #22C55E;
-  box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.18);
   animation: osBcPulse 2.4s ease-in-out infinite;
 }
 @keyframes osBcPulse {
@@ -149,88 +112,61 @@
   align-items: center;
   gap: 5px;
   height: 28px;
-  padding: 0 12px;
+  padding: 0 10px;
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 500;
-  color: var(--ink-mute);
+  color: #64748B;
   background: transparent;
   border: 0;
-  border-radius: 999px;
+  border-radius: 2px;
   cursor: pointer;
   transition: background .14s, color .14s;
   white-space: nowrap;
 }
 .osBcLockBtn:hover {
-  background: rgba(241, 245, 249, 0.85);
-  color: var(--ink);
+  background: #F1F5F9;
+  color: #0F172A;
 }
 
 .osBcViewPdfBtn {
   position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 14px;
+  gap: 5px;
+  height: 28px;
+  padding: 0 12px;
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--ink);
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.85) 0%,
-    rgba(255, 255, 255, 0.55) 55%,
-    rgba(255, 255, 255, 0.70) 100%);
-  border: none;
-  border-radius: 999px;
+  color: #0F172A;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 2px;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow:
-    0 0 0 0.5px rgba(255, 255, 255, 0.95) inset,
-    0 1.5px 0   rgba(255, 255, 255, 0.90) inset,
-    0 -1px 0    rgba(255, 255, 255, 0.40) inset,
-    0 0 0 1px   rgba(60, 75, 110, 0.06),
-    0 6px 18px -6px   rgba(20, 35, 80, 0.18),
-    0 16px 40px -12px rgba(20, 35, 80, 0.15);
-  transition: background .16s ease;
+  transition: background .14s;
 }
-.osBcViewPdfBtn:hover {
-  background: linear-gradient(180deg,
-    rgba(255, 255, 255, 0.92) 0%,
-    rgba(255, 255, 255, 0.66) 55%,
-    rgba(255, 255, 255, 0.78) 100%);
-}
-.osBcViewPdfBtn::after {
-  content: "";
-  position: absolute;
-  inset: 1px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 50%);
-  pointer-events: none;
-  mask: linear-gradient(180deg, #000 0%, transparent 60%);
-}
+.osBcViewPdfBtn:hover { background: #F8FAFC; }
+.osBcViewPdfBtn::after { display: none; }
 
 .osBcSaveCloseBtn {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  height: 30px;
-  padding: 0 16px;
+  height: 28px;
+  padding: 0 14px;
   font-family: inherit;
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 600;
-  color: #ffffff;
-  background: linear-gradient(180deg, var(--accent) 0%, var(--accent-strong) 100%);
-  border: 1px solid rgba(29, 78, 216, 0.60);
-  border-radius: 999px;
+  color: #FFFFFF;
+  background: #2e5bc8;
+  border: 1px solid #2651b3;
+  border-radius: 2px;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    0 1px 2px rgba(29, 78, 216, 0.35),
-    0 4px 12px -4px rgba(37, 99, 235, 0.45);
   transition: background .14s;
 }
 .osBcSaveCloseBtn:hover {
-  background: linear-gradient(180deg, #5a7df6 0%, #2f5ee8 100%);
+  background: #2651b3;
 }

@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OpenSpec · Platform admin</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230F172A'/%3E%3Ccircle cx='50' cy='50' r='22' fill='none' stroke='white' stroke-width='6'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ═════════════ Login overlay ═════════════ -->
+<div class="login-root" id="loginRoot">
+  <div class="login-card">
+    <div class="login-brand">
+      <div class="login-mark">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="4" stroke="white" stroke-width="1.4" fill="none"/>
+        </svg>
+      </div>
+      <div class="login-brand-name">OpenSpec</div>
+      <div class="login-tag">Platform admin</div>
+    </div>
+
+    <div id="loginStep1">
+      <h1 class="login-title">Staff sign-in</h1>
+      <div class="login-sub">Use your OpenSpec staff account. SSO available via Google.</div>
+
+      <div class="field login-row">
+        <label class="field-label" for="loginEmail">Email</label>
+        <input class="input" type="email" id="loginEmail" placeholder="you@openspec.com" autocomplete="username" />
+      </div>
+      <div class="field login-row">
+        <label class="field-label" for="loginPass">Password</label>
+        <input class="input" type="password" id="loginPass" placeholder="••••••••••" autocomplete="current-password" />
+      </div>
+
+      <button class="btn primary full lg" onclick="loginStep1()" style="margin-top:8px">Continue →</button>
+
+      <div class="login-error" id="loginError">Enter a valid OpenSpec staff email and password.</div>
+
+      <div class="login-fineprint">Demo · any valid email + 6+ char password</div>
+    </div>
+
+    <div id="loginStep2" style="display:none">
+      <h1 class="login-title">Two-factor</h1>
+      <div class="login-sub">Enter the 6-digit code from your authenticator app.</div>
+
+      <div class="otp-grid" id="otpGrid">
+        <input class="otp-cell" maxlength="1" inputmode="numeric" data-otp="0" />
+        <input class="otp-cell" maxlength="1" inputmode="numeric" data-otp="1" />
+        <input class="otp-cell" maxlength="1" inputmode="numeric" data-otp="2" />
+        <input class="otp-cell" maxlength="1" inputmode="numeric" data-otp="3" />
+        <input class="otp-cell" maxlength="1" inputmode="numeric" data-otp="4" />
+        <input class="otp-cell" maxlength="1" inputmode="numeric" data-otp="5" />
+      </div>
+
+      <button class="btn primary full lg" onclick="loginStep2()" style="margin-top:18px">Sign in →</button>
+      <button class="btn ghost full" onclick="resetLogin()" style="margin-top:8px">← Back</button>
+
+      <div class="login-fineprint">Demo · any 6 digits</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════ App shell ═════════════ -->
+<div class="app-shell" id="appShell">
+  <div id="impBannerHost"></div>
+
+  <nav class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <circle cx="7" cy="7" r="4" stroke="white" stroke-width="1.4" fill="none"/>
+        </svg>
+      </div>
+      OpenSpec
+      <div class="brand-staff-tag">Platform admin</div>
+    </div>
+
+    <button class="nav-item active" data-view="overview">Overview</button>
+    <button class="nav-item" data-view="tenants">Tenants</button>
+    <button class="nav-item" data-view="users">Users</button>
+    <button class="nav-item" data-view="impersonation">Impersonation</button>
+    <button class="nav-item" data-view="audit">Audit log</button>
+    <button class="nav-item" data-view="settings">Settings</button>
+
+    <div class="nav-spacer"></div>
+
+    <div class="staff-badge" id="staffBadge">
+      <div class="staff-avatar" id="staffAvatar">SK</div>
+      <div>
+        <div class="staff-name" id="staffName">—</div>
+        <div class="staff-role" id="staffRole">—</div>
+      </div>
+      <button class="staff-sign-out" onclick="signOut()">Sign out</button>
+    </div>
+  </nav>
+
+  <main id="overview-view"      class="view active"></main>
+  <main id="tenants-view"       class="view"></main>
+  <main id="users-view"         class="view"></main>
+  <main id="impersonation-view" class="view"></main>
+  <main id="audit-view"         class="view"></main>
+  <main id="settings-view"      class="view"></main>
+</div>
+
+<div id="modal-root"></div>
+<div class="toast" id="toast">Saved</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   STATE — single source of truth for the prototype.
+   Includes platform staff, tenants (factories/dealers/resellers),
+   users (cross-tenant), impersonation sessions, audit log, alerts.
+   ═══════════════════════════════════════════════════════════════════ */
+
+const state = {
+  authed: false,
+  currentView: 'overview',
+  selectedTenantId: null,
+  tenantsFilter: { kind: 'all', status: 'all', search: '' },
+  usersFilter:   { tenantKind: 'all', role: 'all', status: 'all', search: '' },
+  auditFilter:   { scope: 'all', kind: 'all', search: '' },
+
+  staff: [
+    { id: 's-sam',    name: 'Sam Kowal',   email: 'sam@openspec.com',   role: 'platform-admin',   initials: 'SK', avatar: '#0F172A' },
+    { id: 's-dana',   name: 'Dana Ortiz',  email: 'dana@openspec.com',  role: 'platform-support', initials: 'DO', avatar: '#6D28D9' },
+    { id: 's-rachel', name: 'Rachel Tan',  email: 'rachel@openspec.com',role: 'platform-admin',   initials: 'RT', avatar: '#1E40AF' },
+    { id: 's-ben',    name: 'Ben Velara',  email: 'ben@openspec.com',   role: 'platform-admin',   initials: 'BV', avatar: '#047857' }
+  ],
+  signedInStaffId: 's-sam',
+
+  // Tenants live in one flat array; kind = 'factory' | 'dealer' | 'reseller'.
+  // Dealers and resellers link to their parent factory via parentTenantId.
+  tenants: [],
+  // Cross-tenant flat user list
+  users: [],
+  // Impersonation sessions (active + history)
+  impersonationSessions: [],
+  // Cross-tenant audit log
+  auditEvents: [],
+  // Platform-wide operational alerts
+  alerts: [],
+  // Active impersonation in-progress
+  imp: { active: false, sessionId: null }
+};
+
+/* ──────────── Seed: Tenants ──────────── */
+state.tenants = [
+  // Factories
+  { id: 't-northforge',  kind: 'factory',  name: 'Northforge Manufacturing', short: 'Northforge', region: 'Hamilton · ON',     status: 'active',    plan: 'enterprise', mrr: 4800, seats: { used: 14, total: 25 }, ownerEmail: 'sam@northforge.demo',  createdAt: '2024-08-12', parentTenantId: null, brandColor: '#0F172A' },
+  { id: 't-westridge',   kind: 'factory',  name: 'Westridge Window Co.',     short: 'Westridge',  region: 'Kitchener · ON',    status: 'active',    plan: 'growth',     mrr: 2400, seats: { used: 9,  total: 15 }, ownerEmail: 'owner@westridge.demo', createdAt: '2024-11-04', parentTenantId: null, brandColor: '#1E40AF' },
+  { id: 't-claritypane', kind: 'factory',  name: 'ClarityPane Industries',   short: 'ClarityPane',region: 'London · ON',       status: 'active',    plan: 'growth',     mrr: 2400, seats: { used: 11, total: 15 }, ownerEmail: 'admin@claritypane.demo', createdAt: '2025-02-19', parentTenantId: null, brandColor: '#0E7490' },
+  { id: 't-aurora',      kind: 'factory',  name: 'Aurora Glazing',           short: 'Aurora',     region: 'Ottawa · ON',       status: 'trial',     plan: 'growth',     mrr: 0,    seats: { used: 4,  total: 15 }, ownerEmail: 'sasha@auroraglazing.demo', createdAt: '2026-04-28', parentTenantId: null, brandColor: '#6D28D9' },
+  { id: 't-prairiepane', kind: 'factory',  name: 'PrairiePane Windows',      short: 'PrairiePane',region: 'Winnipeg · MB',     status: 'suspended', plan: 'starter',    mrr: 0,    seats: { used: 6,  total: 8 },  ownerEmail: 'mara@prairiepane.demo', createdAt: '2025-06-11', parentTenantId: null, brandColor: '#92400E' },
+  { id: 't-coastal',     kind: 'factory',  name: 'Coastal Frame Co.',        short: 'Coastal',    region: 'Halifax · NS',      status: 'active',    plan: 'starter',    mrr: 1200, seats: { used: 5,  total: 8 },  ownerEmail: 'jp@coastalframe.demo', createdAt: '2025-09-22', parentTenantId: null, brandColor: '#047857' },
+  { id: 't-summit',      kind: 'factory',  name: 'Summit Fenestration',      short: 'Summit',     region: 'Calgary · AB',      status: 'churned',   plan: 'starter',    mrr: 0,    seats: { used: 0,  total: 8 },  ownerEmail: 'ops@summitfen.demo', createdAt: '2024-04-02', parentTenantId: null, brandColor: '#64748B' },
+
+  // Dealers (parented to factories — the same dealer ID may exist under different factories in real life; here each is unique)
+  { id: 't-maple',       kind: 'dealer',   name: 'Maple Street Renovations', short: 'Maple Street', region: 'Toronto · ON',    status: 'active', plan: 'growth',  mrr: 480, seats: { used: 6, total: 10 }, ownerEmail: 'rafi@maplestreet.demo',   createdAt: '2024-08-30', parentTenantId: 't-northforge' },
+  { id: 't-sunrise',     kind: 'dealer',   name: 'Sunrise Windows',          short: 'Sunrise',     region: 'Mississauga · ON', status: 'active', plan: 'growth',  mrr: 480, seats: { used: 7, total: 10 }, ownerEmail: 'tara@sunrisewindows.demo',createdAt: '2023-03-22', parentTenantId: 't-northforge' },
+  { id: 't-coastline',   kind: 'dealer',   name: 'Coastline Builders',       short: 'Coastline',   region: 'Burlington · ON',  status: 'active', plan: 'starter', mrr: 240, seats: { used: 4, total: 6  }, ownerEmail: 'dan@coastlinebuilders.demo',createdAt: '2025-02-11', parentTenantId: 't-northforge' },
+  { id: 't-bayview',     kind: 'dealer',   name: 'Bayview Construction',     short: 'Bayview',     region: 'Hamilton · ON',    status: 'active', plan: 'growth',  mrr: 480, seats: { used: 5, total: 10 }, ownerEmail: 'anita@bayviewconstruction.demo', createdAt: '2024-03-08', parentTenantId: 't-northforge' },
+  { id: 't-northern',    kind: 'dealer',   name: 'Northern Light Homes',     short: 'Northern',    region: 'Barrie · ON',      status: 'active', plan: 'starter', mrr: 240, seats: { used: 3, total: 6  }, ownerEmail: 'mark@northernlighthomes.demo', createdAt: '2024-11-22', parentTenantId: 't-northforge' },
+  { id: 't-oakridge',    kind: 'dealer',   name: 'Oakridge Custom Homes',    short: 'Oakridge',    region: 'Oakville · ON',    status: 'active', plan: 'growth',  mrr: 480, seats: { used: 4, total: 10 }, ownerEmail: 'priya@oakridgecustomhomes.demo', createdAt: '2022-07-14', parentTenantId: 't-northforge' },
+  { id: 't-laurel',      kind: 'dealer',   name: 'Laurel & Lane',            short: 'Laurel',      region: 'Cambridge · ON',   status: 'trial',  plan: 'starter', mrr: 0,   seats: { used: 2, total: 6  }, ownerEmail: 'casey@laurellane.demo', createdAt: '2026-05-02', parentTenantId: 't-westridge' },
+  { id: 't-stoneford',   kind: 'dealer',   name: 'Stoneford Building',       short: 'Stoneford',   region: 'Waterloo · ON',    status: 'active', plan: 'starter', mrr: 240, seats: { used: 3, total: 6  }, ownerEmail: 'ronan@stonefordbuilding.demo', createdAt: '2025-04-19', parentTenantId: 't-westridge' },
+  { id: 't-pinegrove',   kind: 'dealer',   name: 'Pine Grove Renovations',   short: 'Pine Grove',  region: 'Guelph · ON',      status: 'active', plan: 'growth',  mrr: 480, seats: { used: 5, total: 10 }, ownerEmail: 'lauren@pinegrove.demo', createdAt: '2025-01-30', parentTenantId: 't-claritypane' },
+  { id: 't-trillium',    kind: 'dealer',   name: 'Trillium Homes',           short: 'Trillium',    region: 'St. Catharines · ON', status: 'active', plan: 'starter', mrr: 240, seats: { used: 3, total: 6 }, ownerEmail: 'kim@trilliumhomes.demo', createdAt: '2024-10-04', parentTenantId: 't-claritypane' },
+  { id: 't-greybirch',   kind: 'dealer',   name: 'Greybirch & Co.',          short: 'Greybirch',   region: 'London · ON',      status: 'suspended', plan: 'starter', mrr: 0, seats: { used: 2, total: 6 }, ownerEmail: 'parker@greybirch.demo', createdAt: '2025-08-08', parentTenantId: 't-claritypane' },
+  { id: 't-harbourside', kind: 'dealer',   name: 'Harbourside Windows',      short: 'Harbourside', region: 'Halifax · NS',     status: 'active', plan: 'starter', mrr: 240, seats: { used: 2, total: 6  }, ownerEmail: 'sigrid@harboursidewindows.demo', createdAt: '2025-10-15', parentTenantId: 't-coastal' },
+  { id: 't-meridian',    kind: 'dealer',   name: 'Meridian Build Co.',       short: 'Meridian',    region: 'Dartmouth · NS',   status: 'trial',  plan: 'starter', mrr: 0,   seats: { used: 1, total: 6  }, ownerEmail: 'jules@meridianbuild.demo', createdAt: '2026-04-30', parentTenantId: 't-coastal' },
+
+  // Resellers (parented to dealers — embed/white-label tier)
+  { id: 't-reno-pros',   kind: 'reseller', name: 'RenoPros Network',         short: 'RenoPros',    region: 'Multi-region · ON',status: 'active', plan: 'growth',  mrr: 360, seats: { used: 3, total: 8 }, ownerEmail: 'admin@renopros.demo', createdAt: '2025-05-19', parentTenantId: 't-sunrise' },
+  { id: 't-windowfinder',kind: 'reseller', name: 'WindowFinder.ca',          short: 'WindowFinder',region: 'Online · CA',      status: 'active', plan: 'starter', mrr: 180, seats: { used: 2, total: 5 }, ownerEmail: 'ops@windowfinder.demo', createdAt: '2025-08-11', parentTenantId: 't-bayview' },
+  { id: 't-buildmatch',  kind: 'reseller', name: 'BuildMatch',               short: 'BuildMatch',  region: 'Online · CA',      status: 'trial',  plan: 'growth',  mrr: 0,   seats: { used: 1, total: 8 }, ownerEmail: 'team@buildmatch.demo', createdAt: '2026-04-22', parentTenantId: 't-oakridge' }
+];
+
+/* ──────────── Seed: Users ────────────
+   Cross-tenant. Each user belongs to one tenant via tenantId.
+*/
+state.users = [
+  // Northforge (factory) — Owner, production manager, drawings, QC, materials, logistics, plus a few estimators
+  { id: 'u-001', name: 'Sam Chen',      email: 'sam@northforge.demo',    tenantId: 't-northforge', role: 'OWNER',     status: 'active',  lastActive: '4m ago',  createdAt: '2024-08-12' },
+  { id: 'u-002', name: 'Marcus Hill',   email: 'marcus@northforge.demo', tenantId: 't-northforge', role: 'MANAGER',   status: 'active',  lastActive: '12m ago', createdAt: '2024-08-15' },
+  { id: 'u-003', name: 'Lin Park',      email: 'lin@northforge.demo',    tenantId: 't-northforge', role: 'MANAGER',   status: 'active',  lastActive: '24m ago', createdAt: '2024-09-02' },
+  { id: 'u-004', name: 'Dave Pereira',  email: 'dave@northforge.demo',   tenantId: 't-northforge', role: 'MANAGER',   status: 'active',  lastActive: '1h ago',  createdAt: '2024-09-10' },
+  { id: 'u-005', name: 'Priya Nair',    email: 'priya@northforge.demo',  tenantId: 't-northforge', role: 'ADMIN',     status: 'active',  lastActive: '2h ago',  createdAt: '2024-09-12' },
+  { id: 'u-006', name: 'Jules Tan',     email: 'jules@northforge.demo',  tenantId: 't-northforge', role: 'MANAGER',   status: 'active',  lastActive: 'Yest',    createdAt: '2024-10-04' },
+  { id: 'u-007', name: 'Sasha Beck',    email: 'sasha@northforge.demo',  tenantId: 't-northforge', role: 'ESTIMATOR', status: 'active',  lastActive: '3h ago',  createdAt: '2025-01-08' },
+  { id: 'u-008', name: 'Owen Hardy',    email: 'owen@northforge.demo',   tenantId: 't-northforge', role: 'ESTIMATOR', status: 'invited', lastActive: 'invited', createdAt: '2026-05-10' },
+
+  // Westridge (factory)
+  { id: 'u-101', name: 'Tessa McGrath', email: 'owner@westridge.demo',   tenantId: 't-westridge',  role: 'OWNER',     status: 'active',  lastActive: '32m ago', createdAt: '2024-11-04' },
+  { id: 'u-102', name: 'Ben Park',      email: 'ben.p@westridge.demo',   tenantId: 't-westridge',  role: 'ADMIN',     status: 'active',  lastActive: '1d ago',  createdAt: '2024-11-12' },
+  { id: 'u-103', name: 'Eva Lin',       email: 'eva@westridge.demo',     tenantId: 't-westridge',  role: 'MANAGER',   status: 'active',  lastActive: '3h ago',  createdAt: '2025-02-14' },
+
+  // ClarityPane (factory)
+  { id: 'u-201', name: 'Tomas Reyes',   email: 'admin@claritypane.demo', tenantId: 't-claritypane',role: 'OWNER',     status: 'active',  lastActive: '18m ago', createdAt: '2025-02-19' },
+  { id: 'u-202', name: 'Anjali Roy',    email: 'anjali@claritypane.demo',tenantId: 't-claritypane',role: 'ADMIN',     status: 'active',  lastActive: '1h ago',  createdAt: '2025-02-22' },
+
+  // Aurora (factory, trial)
+  { id: 'u-301', name: 'Sasha Markovich', email: 'sasha@auroraglazing.demo', tenantId: 't-aurora', role: 'OWNER',    status: 'active',  lastActive: '6m ago',  createdAt: '2026-04-28' },
+
+  // Coastal (factory)
+  { id: 'u-401', name: 'JP Allard',     email: 'jp@coastalframe.demo',   tenantId: 't-coastal',    role: 'OWNER',     status: 'active',  lastActive: '2h ago',  createdAt: '2025-09-22' },
+
+  // Maple Street (dealer)
+  { id: 'u-501', name: 'Rafi Bahari',   email: 'rafi@maplestreet.demo',  tenantId: 't-maple',      role: 'OWNER',     status: 'active',  lastActive: '8m ago',  createdAt: '2024-08-30' },
+  { id: 'u-502', name: 'Noor Saleh',    email: 'noor@maplestreet.demo',  tenantId: 't-maple',      role: 'ESTIMATOR', status: 'active',  lastActive: '40m ago', createdAt: '2024-09-04' },
+  { id: 'u-503', name: 'Mateo Cruz',    email: 'mateo@maplestreet.demo', tenantId: 't-maple',      role: 'ESTIMATOR', status: 'active',  lastActive: '1d ago',  createdAt: '2025-01-12' },
+
+  // Sunrise (dealer)
+  { id: 'u-601', name: 'Tara Fadel',    email: 'tara@sunrisewindows.demo', tenantId: 't-sunrise',  role: 'OWNER',     status: 'active',  lastActive: '22m ago', createdAt: '2023-03-22' },
+  { id: 'u-602', name: 'Marco Reyes',   email: 'marco@sunrisewindows.demo',tenantId: 't-sunrise',  role: 'ADMIN',     status: 'active',  lastActive: '3h ago',  createdAt: '2023-04-01' },
+  { id: 'u-603', name: 'Sienna Holm',   email: 'sienna@sunrisewindows.demo',tenantId: 't-sunrise', role: 'ESTIMATOR', status: 'active',  lastActive: '1h ago',  createdAt: '2024-02-10' },
+
+  // Coastline (dealer)
+  { id: 'u-701', name: 'Daniel Krause', email: 'dan@coastlinebuilders.demo', tenantId: 't-coastline', role: 'OWNER',  status: 'active',  lastActive: '12m ago', createdAt: '2025-02-11' },
+  { id: 'u-702', name: 'Iris Volt',     email: 'iris@coastlinebuilders.demo',tenantId: 't-coastline', role: 'ESTIMATOR', status: 'active', lastActive: '3h ago', createdAt: '2025-03-04' },
+
+  // Bayview (dealer)
+  { id: 'u-801', name: 'Anita Singh',   email: 'anita@bayviewconstruction.demo', tenantId: 't-bayview', role: 'OWNER', status: 'active', lastActive: '4h ago', createdAt: '2024-03-08' },
+
+  // Northern (dealer)
+  { id: 'u-901', name: 'Mark Hennessy', email: 'mark@northernlighthomes.demo', tenantId: 't-northern', role: 'OWNER', status: 'active', lastActive: 'Yest', createdAt: '2024-11-22' },
+
+  // Oakridge (dealer)
+  { id: 'u-A01', name: 'Priya Vora',    email: 'priya@oakridgecustomhomes.demo', tenantId: 't-oakridge', role: 'OWNER', status: 'active', lastActive: '2h ago', createdAt: '2022-07-14' },
+
+  // Trial dealers + suspended
+  { id: 'u-B01', name: 'Casey Lim',     email: 'casey@laurellane.demo',       tenantId: 't-laurel',     role: 'OWNER', status: 'active', lastActive: '14m ago', createdAt: '2026-05-02' },
+  { id: 'u-C01', name: 'Parker Wynne',  email: 'parker@greybirch.demo',       tenantId: 't-greybirch',  role: 'OWNER', status: 'suspended', lastActive: '6d ago', createdAt: '2025-08-08' },
+
+  // Resellers
+  { id: 'u-D01', name: 'Kiran Patel',   email: 'admin@renopros.demo',         tenantId: 't-reno-pros', role: 'OWNER', status: 'active', lastActive: '1h ago',  createdAt: '2025-05-19' },
+  { id: 'u-E01', name: 'Lex Ortega',    email: 'ops@windowfinder.demo',       tenantId: 't-windowfinder',role: 'OWNER', status: 'active', lastActive: '40m ago', createdAt: '2025-08-11' },
+  { id: 'u-F01', name: 'Theo Yamada',   email: 'team@buildmatch.demo',        tenantId: 't-buildmatch', role: 'OWNER', status: 'active', lastActive: '6h ago',  createdAt: '2026-04-22' }
+];
+
+/* ──────────── Seed: Impersonation sessions ──────────── */
+state.impersonationSessions = [
+  // None active by default — Sam can start one
+  { id: 'imp-301', impersonatedUserId: 'u-002', tenantId: 't-northforge', impersonatorStaffId: 's-dana',   reason: 'Production manager reported PDF generation timeout on O-2408 — reproducing.', startedAt: '2026-05-11T16:14:00Z', endedAt: '2026-05-11T16:52:00Z', endedByReason: 'manual',   durationMin: 38 },
+  { id: 'imp-300', impersonatedUserId: 'u-501', tenantId: 't-maple',      impersonatorStaffId: 's-sam',    reason: 'Dealer cannot see new variant published last night — checking permissions.', startedAt: '2026-05-10T22:08:00Z', endedAt: '2026-05-10T22:34:00Z', endedByReason: 'manual',   durationMin: 26 },
+  { id: 'imp-299', impersonatedUserId: 'u-101', tenantId: 't-westridge',  impersonatorStaffId: 's-rachel', reason: 'Onboarding follow-up — confirmed catalog import succeeded, walked owner through dealer invite.', startedAt: '2026-05-09T14:00:00Z', endedAt: '2026-05-09T15:00:00Z', endedByReason: 'expired',  durationMin: 60 },
+  { id: 'imp-298', impersonatedUserId: 'u-301', tenantId: 't-aurora',     impersonatorStaffId: 's-dana',   reason: 'Trial activation support — helping seed initial catalog from spreadsheet.', startedAt: '2026-05-08T11:22:00Z', endedAt: '2026-05-08T12:46:00Z', endedByReason: 'manual',   durationMin: 84 },
+  { id: 'imp-297', impersonatedUserId: 'u-601', tenantId: 't-sunrise',    impersonatorStaffId: 's-sam',    reason: 'Investigating quote PDF rendering issue reported via support email.', startedAt: '2026-05-06T18:55:00Z', endedAt: '2026-05-06T19:18:00Z', endedByReason: 'manual',   durationMin: 23 }
+];
+
+/* ──────────── Seed: Platform-wide alerts ──────────── */
+state.alerts = [
+  { id: 'a1', severity: 'danger',  kind: 'webhook',     headline: '3 dealers failing webhook deliveries',   detail: 'Maple Street, Sunrise, Oakridge — invalid signatures since May 11 14:00. Auto-retry exhausted.', at: '12m ago',  status: 'open' },
+  { id: 'a2', severity: 'warn',    kind: 'error-rate',  headline: 'PDF render p95 latency above 4s',         detail: '38 jobs in queue · last hour. Worker scaling triggered.',                                       at: '38m ago',  status: 'open' },
+  { id: 'a3', severity: 'warn',    kind: 'billing',     headline: '2 tenant payment methods expiring < 14d', detail: 'PrairiePane (Visa) · Greybirch (Visa) — auto-suspend on expiry.',                              at: '2h ago',   status: 'open' },
+  { id: 'a4', severity: 'info',    kind: 'trial',       headline: '3 trials converting in < 7 days',          detail: 'Aurora Glazing · Laurel & Lane · Meridian Build Co. — outreach scheduled.',                    at: '5h ago',   status: 'acknowledged' },
+  { id: 'a5', severity: 'danger',  kind: 'security',    headline: 'Suspicious login pattern flagged',         detail: 'Greybirch · 11 failed sign-in attempts from 3 IPs. Lockout engaged.',                          at: '1d ago',   status: 'acknowledged' }
+];
+
+/* ──────────── Seed: Cross-tenant audit log ──────────── */
+state.auditEvents = [
+  // Platform-admin actions (scope=cross-tenant)
+  { id: 1,  kind: 'impersonation.ended',   actor: 'Dana Ortiz',   actorType: 'platform-admin', tenantId: 't-northforge',  at: '20h ago',  target: 'Marcus Hill',     meta: 'Session 38min · resolved PDF timeout', isPlatform: true },
+  { id: 2,  kind: 'tenant.created',        actor: 'Sam Kowal',    actorType: 'platform-admin', tenantId: 't-aurora',      at: '2d ago',   target: 'Aurora Glazing',  meta: 'Plan: growth · trial · 14 day',         isPlatform: true },
+  { id: 3,  kind: 'tenant.suspended',      actor: 'Rachel Tan',   actorType: 'platform-admin', tenantId: 't-greybirch',   at: '3d ago',   target: 'Greybirch & Co.', meta: 'Payment method expired · auto',         isPlatform: true },
+  { id: 4,  kind: 'platform.config_change',actor: 'Sam Kowal',    actorType: 'platform-admin', tenantId: null,            at: '4d ago',   target: 'Feature flag · live-pricing-v2', meta: 'Enabled for all enterprise plan tenants', isPlatform: true },
+  { id: 5,  kind: 'impersonation.started', actor: 'Sam Kowal',    actorType: 'platform-admin', tenantId: 't-maple',       at: '4d ago',   target: 'Rafi Bahari',     meta: 'Reason: variant visibility check',     isPlatform: true },
+  { id: 6,  kind: 'tenant.created',        actor: 'Sam Kowal',    actorType: 'platform-admin', tenantId: 't-laurel',      at: '10d ago',  target: 'Laurel & Lane',   meta: 'Plan: starter · trial · child of Westridge', isPlatform: true },
+
+  // Tenant-internal events (scope=own) — surface a few so the cross-tenant view feels real
+  { id: 7,  kind: 'user.invited',          actor: 'Sam Chen',     actorType: 'tenant-owner',   tenantId: 't-northforge',  at: '2h ago',   target: 'owen@northforge.demo', meta: 'Invited as ESTIMATOR',             isPlatform: false },
+  { id: 8,  kind: 'catalog.published',     actor: 'Sam Chen',     actorType: 'tenant-owner',   tenantId: 't-northforge',  at: '6h ago',   target: 'v19 · 31 products',    meta: '+2 variants · 7 price adjustments', isPlatform: false },
+  { id: 9,  kind: 'user.role_changed',     actor: 'Tessa McGrath',actorType: 'tenant-owner',   tenantId: 't-westridge',   at: '1d ago',   target: 'eva@westridge.demo',   meta: 'ESTIMATOR → MANAGER',               isPlatform: false },
+  { id: 10, kind: 'order.created',         actor: 'Rafi Bahari',  actorType: 'tenant-user',    tenantId: 't-maple',       at: '14m ago',  target: 'O-2410',               meta: 'Riverside Heights · 10u · $13K',     isPlatform: false },
+  { id: 11, kind: 'tenant.settings_changed',actor: 'Anita Singh', actorType: 'tenant-owner',   tenantId: 't-bayview',     at: '3h ago',   target: 'Branding',             meta: 'Logo + primary color updated',       isPlatform: false },
+  { id: 12, kind: 'user.session_revoked',  actor: 'Parker Wynne', actorType: 'tenant-owner',   tenantId: 't-greybirch',   at: '1d ago',   target: '3 active sessions',    meta: 'Per security alert',                 isPlatform: false },
+  { id: 13, kind: 'webhook.delivery_failed',actor: 'system',      actorType: 'system',         tenantId: 't-maple',       at: '4h ago',   target: 'orders.created',       meta: '502 from dealer endpoint · retried 3x', isPlatform: false },
+  { id: 14, kind: 'platform.tier_changed', actor: 'Rachel Tan',   actorType: 'platform-admin', tenantId: 't-claritypane', at: '6d ago',   target: 'ClarityPane',          meta: 'Starter → Growth · MRR $1200 → $2400', isPlatform: true },
+  { id: 15, kind: 'platform.support_note', actor: 'Dana Ortiz',   actorType: 'platform-admin', tenantId: 't-aurora',      at: '3d ago',   target: 'Aurora trial',         meta: 'Walked owner through catalog import',  isPlatform: true }
+];
+
+/* ═══════════════════════════════════════════════════════════════════
+   HELPERS
+   ═══════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+function fmtMoney(n) {
+  if (n === 0) return '$0';
+  if (n >= 1000) return '$' + (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + 'K';
+  return '$' + n;
+}
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getTenant(id)   { return state.tenants.find(t => t.id === id); }
+function getUser(id)     { return state.users.find(u => u.id === id); }
+function getStaff(id)    { return state.staff.find(s => s.id === id); }
+
+function tenantsByKind(kind) {
+  if (kind === 'all') return state.tenants;
+  return state.tenants.filter(t => t.kind === kind);
+}
+function tenantUsers(tenantId) {
+  return state.users.filter(u => u.tenantId === tenantId);
+}
+function childTenants(parentId) {
+  return state.tenants.filter(t => t.parentTenantId === parentId);
+}
+
+function planLabel(p) {
+  return { starter: 'Starter', growth: 'Growth', enterprise: 'Enterprise' }[p] || p;
+}
+function statusLabel(s) {
+  return { active: 'Active', trial: 'Trial', suspended: 'Suspended', churned: 'Churned', invited: 'Invited' }[s] || s;
+}
+function roleLabel(r) {
+  return { OWNER: 'Owner', ADMIN: 'Admin', MANAGER: 'Manager', ESTIMATOR: 'Estimator', VIEWER: 'Viewer' }[r] || r;
+}
+function kindLabel(k) {
+  return { factory: 'Factory', dealer: 'Dealer', reseller: 'Reseller' }[k] || k;
+}
+
+function avatarHTML(seed, sizeClass = 'sm') {
+  // Stable monochrome / accent color from string hash
+  const hue = seed.split('').reduce((s, c) => s + c.charCodeAt(0), 0) % 360;
+  const initials = (() => {
+    const parts = seed.split(/[\s@.]/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+    return seed.slice(0, 2).toUpperCase();
+  })();
+  return `<div class="avatar ${sizeClass}" style="background:hsl(${hue}, 38%, 28%)">${initials}</div>`;
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+function pushAudit(ev) {
+  ev.id = (state.auditEvents[0]?.id || 0) + 1;
+  ev.at  = ev.at || 'just now';
+  state.auditEvents.unshift(ev);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LOGIN — two-step (password → OTP → app shell)
+   ═══════════════════════════════════════════════════════════════════ */
+function loginStep1() {
+  const email = $('loginEmail').value.trim();
+  const pass = $('loginPass').value;
+  const err = $('loginError');
+  if (!email.includes('@') || !email.includes('.') || pass.length < 6) {
+    err.classList.add('show');
+    return;
+  }
+  err.classList.remove('show');
+  // Pick the matching staff member by email, or default to Sam
+  const match = state.staff.find(s => s.email.toLowerCase() === email.toLowerCase());
+  state.signedInStaffId = match ? match.id : 's-sam';
+
+  $('loginStep1').style.display = 'none';
+  $('loginStep2').style.display = 'block';
+  setTimeout(() => $('otpGrid').querySelector('.otp-cell').focus(), 50);
+}
+
+function loginStep2() {
+  const cells = Array.from(document.querySelectorAll('.otp-cell'));
+  const code = cells.map(c => c.value).join('');
+  const err = $('loginError');
+  if (!/^\d{6}$/.test(code)) {
+    $('loginStep2').appendChild(err);
+    err.textContent = 'Enter all 6 digits.';
+    err.classList.add('show');
+    return;
+  }
+  err.classList.remove('show');
+  state.authed = true;
+  $('loginRoot').style.display = 'none';
+  $('appShell').classList.add('visible');
+  renderStaffBadge();
+  switchView('overview');
+  toast('Welcome, ' + getStaff(state.signedInStaffId).name.split(' ')[0]);
+}
+
+function resetLogin() {
+  $('loginStep2').style.display = 'none';
+  $('loginStep1').style.display = 'block';
+  document.querySelectorAll('.otp-cell').forEach(c => c.value = '');
+}
+
+function signOut() {
+  state.authed = false;
+  state.imp = { active: false, sessionId: null };
+  $('impBannerHost').innerHTML = '';
+  $('loginPass').value = '';
+  document.querySelectorAll('.otp-cell').forEach(c => c.value = '');
+  $('appShell').classList.remove('visible');
+  resetLogin();
+  $('loginRoot').style.display = 'flex';
+  toast('Signed out');
+}
+
+function renderStaffBadge() {
+  const s = getStaff(state.signedInStaffId);
+  if (!s) return;
+  $('staffName').textContent = s.name;
+  $('staffRole').textContent = s.role === 'platform-admin' ? 'Platform admin' : 'Platform support';
+  $('staffAvatar').textContent = s.initials;
+  $('staffAvatar').style.background = s.avatar;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   VIEW ROUTING
+   ═══════════════════════════════════════════════════════════════════ */
+function switchView(name) {
+  state.currentView = name;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(name + '-view').classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const btn = document.querySelector(`.nav-item[data-view="${name}"]`);
+  if (btn) btn.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'instant' });
+
+  if (name === 'overview')      renderOverview();
+  else if (name === 'tenants')  renderTenants();
+  else if (name === 'users')    renderUsers();
+  else if (name === 'impersonation') renderImpersonation();
+  else if (name === 'audit')    renderAudit();
+  else if (name === 'settings') renderSettings();
+}
+
+/* Views fill in below in subsequent functions. Stubs render placeholder content. */
+function renderOverview()      { $('overview-view').innerHTML      = renderOverviewBody(); }
+function renderTenants()       { $('tenants-view').innerHTML       = renderTenantsBody(); }
+function renderUsers()         { $('users-view').innerHTML         = renderUsersBody(); }
+function renderImpersonation() { $('impersonation-view').innerHTML = renderImpersonationBody(); }
+function renderAudit()         { $('audit-view').innerHTML         = renderAuditBody(); }
+function renderSettings()      { $('settings-view').innerHTML      = renderSettingsBody(); }
+
+/* ═══════════════════════════════════════════════════════════════════
+   VIEW BODIES — placeholders; flesh out one section at a time below.
+   ═══════════════════════════════════════════════════════════════════ */
+function renderOverviewBody() {
+  const factories  = tenantsByKind('factory');
+  const dealers    = tenantsByKind('dealer');
+  const resellers  = tenantsByKind('reseller');
+  const activeUsers = state.users.filter(u => u.status === 'active').length;
+  const totalMRR = state.tenants.reduce((s, t) => s + (t.mrr || 0), 0);
+  const openAlerts = state.alerts.filter(a => a.status === 'open').length;
+  const activeImp = state.impersonationSessions.filter(s => !s.endedAt).length;
+  const recentSignups = [...state.tenants]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 6);
+  const recentAudit = state.auditEvents.slice(0, 6);
+
+  return `
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Platform overview</h1>
+        <div class="view-subtitle">${state.tenants.length} tenants · ${activeUsers} active users · ${fmtMoney(totalMRR)} MRR · ${openAlerts} open alert${openAlerts === 1 ? '' : 's'}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" onclick="switchView('audit')">Audit log →</button>
+        <button class="btn primary" onclick="openOnboardWizard()">+ Onboard factory</button>
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      <div class="kpi-card" onclick="switchView('tenants'); state.tenantsFilter.kind='factory'; renderTenants()">
+        <div class="kpi-label">Factories</div>
+        <div class="kpi-value">${factories.length}</div>
+        <div class="kpi-delta up">${factories.filter(t => t.status === 'active').length} active · ${factories.filter(t => t.status === 'trial').length} trial</div>
+      </div>
+      <div class="kpi-card" onclick="switchView('tenants'); state.tenantsFilter.kind='dealer'; renderTenants()">
+        <div class="kpi-label">Dealers</div>
+        <div class="kpi-value">${dealers.length}</div>
+        <div class="kpi-delta up">${dealers.filter(t => t.status === 'active').length} active · ${resellers.length} resellers</div>
+      </div>
+      <div class="kpi-card" onclick="switchView('tenants')">
+        <div class="kpi-label">MRR</div>
+        <div class="kpi-value">${fmtMoney(totalMRR)}</div>
+        <div class="kpi-delta up">↑ ${fmtMoney(1200)} mo/mo</div>
+      </div>
+      <div class="kpi-card ${openAlerts > 0 ? 'alert' : ''}" onclick="document.getElementById('alertsPanel').scrollIntoView({behavior:'smooth'})">
+        <div class="kpi-label">${openAlerts > 0 ? 'Open alerts' : 'Healthy'}</div>
+        <div class="kpi-value">${openAlerts > 0 ? openAlerts : '✓'}</div>
+        <div class="kpi-delta ${openAlerts > 0 ? 'down' : 'up'}">${activeImp} active impersonation${activeImp === 1 ? '' : 's'}</div>
+      </div>
+    </div>
+
+    <div class="overview-grid">
+      <div class="overview-stack">
+        <!-- Alerts panel -->
+        <div class="panel" id="alertsPanel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">Platform alerts</div>
+              <div style="font-size:11.5px;color:var(--gl-text-mute);margin-top:2px">${openAlerts} open · ${state.alerts.length - openAlerts} acknowledged</div>
+            </div>
+            <button class="panel-action">Manage thresholds →</button>
+          </div>
+          <div class="panel-body flush">
+            ${state.alerts.map(a => `
+              <div class="list-row" onclick="acknowledgeAlert('${a.id}')">
+                <div class="list-dot" style="background:${a.severity === 'danger' ? 'var(--gl-danger)' : a.severity === 'warn' ? 'var(--gl-warn)' : 'var(--gl-info)'}"></div>
+                <div class="list-content">
+                  <div class="list-title">${esc(a.headline)}</div>
+                  <div class="list-meta">${esc(a.detail)}</div>
+                </div>
+                <div class="list-time">${a.status === 'open' ? '<span style="color:var(--gl-danger);font-weight:600">OPEN</span> · ' + a.at : '✓ ack · ' + a.at}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Recent signups -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Recent tenant signups</div>
+            <button class="panel-action" onclick="switchView('tenants')">View all →</button>
+          </div>
+          <div class="panel-body flush">
+            ${recentSignups.map(t => `
+              <div class="list-row" onclick="openTenantDetail('${t.id}')">
+                <div class="list-dot" style="background:${t.status === 'active' ? 'var(--gl-success)' : t.status === 'trial' ? 'var(--gl-info)' : t.status === 'suspended' ? 'var(--gl-warn)' : 'var(--gl-text-mute)'}"></div>
+                <div class="list-content">
+                  <div class="list-title">${esc(t.name)} <span style="margin-left:6px"><span class="kind-tag ${t.kind}">${kindLabel(t.kind)}</span></span></div>
+                  <div class="list-meta">${esc(t.region)} · ${planLabel(t.plan)} · ${fmtDate(t.createdAt)}</div>
+                </div>
+                <div class="list-time">${fmtDate(t.createdAt).split(',')[0]}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="overview-stack">
+        <!-- Active / recent impersonation sessions -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Impersonation activity</div>
+            <button class="panel-action" onclick="switchView('impersonation')">All sessions →</button>
+          </div>
+          <div class="panel-body flush">
+            ${state.impersonationSessions.slice(0, 5).map(s => {
+              const u = getUser(s.impersonatedUserId);
+              const t = getTenant(s.tenantId);
+              const staff = getStaff(s.impersonatorStaffId);
+              const active = !s.endedAt;
+              return `
+                <div class="list-row" onclick="switchView('impersonation')">
+                  <div class="list-dot" style="background:${active ? 'var(--gl-danger)' : 'var(--gl-text-mute)'}"></div>
+                  <div class="list-content">
+                    <div class="list-title">${staff ? esc(staff.name) : '—'} → ${u ? esc(u.name) : '—'} ${active ? '<span style="color:var(--gl-danger);font-weight:700;font-size:9.5px;text-transform:uppercase;letter-spacing:0.08em;margin-left:4px">LIVE</span>' : ''}</div>
+                    <div class="list-meta">${t ? esc(t.name) : '—'} · ${s.durationMin}min · ${esc((s.reason || '').slice(0, 60))}${s.reason && s.reason.length > 60 ? '…' : ''}</div>
+                  </div>
+                  <div class="list-time">${s.endedAt ? new Date(s.endedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'live'}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+
+        <!-- Recent audit events -->
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Recent platform actions</div>
+            <button class="panel-action" onclick="switchView('audit')">Full log →</button>
+          </div>
+          <div class="panel-body flush">
+            ${recentAudit.map(e => `
+              <div class="list-row" onclick="switchView('audit')">
+                <div class="list-dot" style="background:${e.isPlatform ? 'var(--gl-text)' : 'var(--gl-text-faint)'}"></div>
+                <div class="list-content">
+                  <div class="list-title">${esc(e.kind)} <span style="color:var(--gl-text-mute);font-weight:400">· ${esc(e.actor)}</span></div>
+                  <div class="list-meta">${esc(e.target || '—')} · ${esc(e.meta || '')}</div>
+                </div>
+                <div class="list-time">${e.at}</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* The remaining view bodies (tenants, users, impersonation, audit, settings)
+   and the onboarding wizard, impersonation modal, tenant detail panel,
+   are appended in the next chunk. */
+
+/* ═══════════════════════════════════════════════════════════════════
+   TENANTS — list + detail
+   ═══════════════════════════════════════════════════════════════════ */
+function renderTenantsBody() {
+  if (state.selectedTenantId) return renderTenantDetail();
+
+  const f = state.tenantsFilter;
+  let rows = state.tenants;
+  if (f.kind !== 'all')   rows = rows.filter(t => t.kind === f.kind);
+  if (f.status !== 'all') rows = rows.filter(t => t.status === f.status);
+  if (f.search.trim())    {
+    const q = f.search.toLowerCase();
+    rows = rows.filter(t => t.name.toLowerCase().includes(q) || t.region.toLowerCase().includes(q) || t.ownerEmail.toLowerCase().includes(q));
+  }
+
+  const kinds = [
+    { id: 'all',      label: 'All',       count: state.tenants.length },
+    { id: 'factory',  label: 'Factories', count: tenantsByKind('factory').length },
+    { id: 'dealer',   label: 'Dealers',   count: tenantsByKind('dealer').length },
+    { id: 'reseller', label: 'Resellers', count: tenantsByKind('reseller').length }
+  ];
+  const statuses = ['all', 'active', 'trial', 'suspended', 'churned'];
+
+  return `
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Tenants</h1>
+        <div class="view-subtitle">${rows.length} of ${state.tenants.length} · factories own dealers · dealers may own resellers</div>
+      </div>
+      <button class="btn primary" onclick="openOnboardWizard()">+ Onboard factory</button>
+    </div>
+
+    <div class="filter-bar">
+      ${kinds.map(k => `
+        <button class="filter-pill ${f.kind === k.id ? 'active' : ''}" onclick="setTenantKindFilter('${k.id}')">${k.label}<span class="filter-pill-count">${k.count}</span></button>
+      `).join('')}
+      <div style="width:14px"></div>
+      ${statuses.map(s => `
+        <button class="filter-pill ${f.status === s ? 'active' : ''}" onclick="setTenantStatusFilter('${s}')">${s === 'all' ? 'Any status' : statusLabel(s)}</button>
+      `).join('')}
+      <div style="flex:1"></div>
+      <input class="search-input" type="text" placeholder="Search by name, region, owner…" value="${esc(f.search)}" oninput="state.tenantsFilter.search = this.value; renderTenants(); this.focus(); setTimeout(()=>{const el=document.querySelector('.search-input');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" />
+    </div>
+
+    <div class="tbl" style="grid-template-columns: 1fr">
+      <div class="tbl-head" style="grid-template-columns: minmax(0, 2.2fr) 90px 110px 100px 90px 100px 110px">
+        <div>Tenant</div>
+        <div>Kind</div>
+        <div>Status</div>
+        <div>Plan</div>
+        <div class="tbl-num">MRR</div>
+        <div class="tbl-num">Seats</div>
+        <div>Created</div>
+      </div>
+      ${rows.length === 0 ? `<div class="tbl-empty">No tenants match these filters.</div>` : rows.map(t => {
+        const child = childTenants(t.id).length;
+        return `
+          <div class="tbl-row" style="grid-template-columns: minmax(0, 2.2fr) 90px 110px 100px 90px 100px 110px" onclick="openTenantDetail('${t.id}')">
+            <div>
+              <div style="font-weight:600;letter-spacing:-0.008em">${esc(t.name)}</div>
+              <div class="tbl-secondary">${esc(t.region)} · ${esc(t.ownerEmail)}${child > 0 ? ` · ${child} child` : ''}</div>
+            </div>
+            <div><span class="kind-tag ${t.kind}">${kindLabel(t.kind)}</span></div>
+            <div><span class="status-pill ${t.status}"><span class="dot"></span>${statusLabel(t.status)}</span></div>
+            <div style="font-size:12.5px">${planLabel(t.plan)}</div>
+            <div class="tbl-num"><strong>${fmtMoney(t.mrr || 0)}</strong></div>
+            <div class="tbl-num">${t.seats.used}<span style="color:var(--gl-text-mute)">/${t.seats.total}</span></div>
+            <div style="font-size:12.5px;color:var(--gl-text-mute);font-variant-numeric:tabular-nums">${fmtDate(t.createdAt)}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function setTenantKindFilter(k)   { state.tenantsFilter.kind = k; renderTenants(); }
+function setTenantStatusFilter(s) { state.tenantsFilter.status = s; renderTenants(); }
+
+function renderTenantDetail() {
+  const t = getTenant(state.selectedTenantId);
+  if (!t) { state.selectedTenantId = null; return renderTenantsBody(); }
+  const parent = t.parentTenantId ? getTenant(t.parentTenantId) : null;
+  const children = childTenants(t.id);
+  const users = tenantUsers(t.id);
+  const tenantAudit = state.auditEvents.filter(e => e.tenantId === t.id).slice(0, 8);
+
+  return `
+    <div class="tenant-detail">
+      <div class="tenant-detail-bar">
+        <button class="back-pill" onclick="state.selectedTenantId=null; renderTenants();">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M7.5 9.5L4 6l3.5-3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Back to tenants
+        </button>
+        <div class="tenant-detail-title">
+          ${esc(t.name)}
+          <span class="kind-tag ${t.kind}">${kindLabel(t.kind)}</span>
+          <span class="status-pill ${t.status}"><span class="dot"></span>${statusLabel(t.status)}</span>
+        </div>
+        <div style="flex:1"></div>
+        <div style="font-size:12px;color:var(--gl-text-mute);font-variant-numeric:tabular-nums">${esc(t.region)} · ${parent ? 'under ' + esc(parent.name) + ' · ' : ''}created ${fmtDate(t.createdAt)}</div>
+      </div>
+
+      <div class="tenant-detail-body">
+        <div class="actions-row">
+          <button class="btn primary" onclick="openStartImpModal('${t.id}')">↗ Start impersonation</button>
+          ${t.status === 'suspended'
+            ? `<button class="btn ghost" onclick="setTenantStatus('${t.id}','active')">✓ Reactivate</button>`
+            : t.status === 'active'
+              ? `<button class="btn ghost" onclick="setTenantStatus('${t.id}','suspended')">⏸ Suspend</button>`
+              : t.status === 'trial'
+                ? `<button class="btn ghost" onclick="setTenantStatus('${t.id}','active')">✓ Activate</button>`
+                : ''}
+          <button class="btn ghost" onclick="toast('Plan change modal — placeholder')">Change plan</button>
+          <button class="btn ghost" onclick="toast('Owner contact email opened')">✉ Email owner</button>
+          <div style="flex:1"></div>
+          <button class="btn ghost" onclick="toast('Tenant export queued')">↓ Export tenant data</button>
+        </div>
+
+        <div class="tenant-meta-grid">
+          <div class="tenant-meta-card">
+            <div class="tenant-meta-label">Plan</div>
+            <div class="tenant-meta-value">${planLabel(t.plan)}</div>
+          </div>
+          <div class="tenant-meta-card">
+            <div class="tenant-meta-label">MRR</div>
+            <div class="tenant-meta-value">${fmtMoney(t.mrr || 0)}</div>
+          </div>
+          <div class="tenant-meta-card">
+            <div class="tenant-meta-label">Seats</div>
+            <div class="tenant-meta-value">${t.seats.used}<span style="font-size:12px;color:var(--gl-text-mute);font-weight:500;letter-spacing:-0.005em"> / ${t.seats.total}</span></div>
+          </div>
+          <div class="tenant-meta-card">
+            <div class="tenant-meta-label">${t.kind === 'factory' ? 'Dealers + resellers' : 'Users'}</div>
+            <div class="tenant-meta-value">${t.kind === 'factory' ? children.length : users.length}</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);gap:14px;align-items:start">
+          <div>
+            ${t.kind === 'factory' && children.length > 0 ? `
+              <div class="section-label">Child tenants · ${children.length}</div>
+              <div class="tbl" style="margin-bottom:14px">
+                <div class="tbl-head" style="grid-template-columns: minmax(0, 2fr) 80px 100px 90px 80px">
+                  <div>Name</div><div>Kind</div><div>Status</div><div>Plan</div><div class="tbl-num">MRR</div>
+                </div>
+                ${children.map(c => `
+                  <div class="tbl-row" style="grid-template-columns: minmax(0, 2fr) 80px 100px 90px 80px" onclick="openTenantDetail('${c.id}')">
+                    <div>
+                      <div style="font-weight:600">${esc(c.name)}</div>
+                      <div class="tbl-secondary">${esc(c.region)}</div>
+                    </div>
+                    <div><span class="kind-tag ${c.kind}">${kindLabel(c.kind)}</span></div>
+                    <div><span class="status-pill ${c.status}"><span class="dot"></span>${statusLabel(c.status)}</span></div>
+                    <div style="font-size:12.5px">${planLabel(c.plan)}</div>
+                    <div class="tbl-num"><strong>${fmtMoney(c.mrr || 0)}</strong></div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+
+            <div class="section-label">Users · ${users.length}</div>
+            <div class="tbl">
+              <div class="tbl-head" style="grid-template-columns: minmax(0, 2fr) 100px 100px 110px">
+                <div>User</div><div>Role</div><div>Status</div><div>Last active</div>
+              </div>
+              ${users.length === 0 ? `<div class="tbl-empty">No users yet — onboarding in progress.</div>` : users.map(u => `
+                <div class="tbl-row" style="grid-template-columns: minmax(0, 2fr) 100px 100px 110px" onclick="openStartImpModal('${t.id}','${u.id}')">
+                  <div style="display:flex;align-items:center;gap:10px">
+                    ${avatarHTML(u.email, 'sm')}
+                    <div>
+                      <div style="font-weight:600">${esc(u.name)}</div>
+                      <div class="tbl-secondary">${esc(u.email)}</div>
+                    </div>
+                  </div>
+                  <div style="font-size:12.5px">${roleLabel(u.role)}</div>
+                  <div><span class="status-pill ${u.status}"><span class="dot"></span>${statusLabel(u.status)}</span></div>
+                  <div style="font-size:12px;color:var(--gl-text-mute);font-variant-numeric:tabular-nums">${esc(u.lastActive)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+
+          <div>
+            <div class="section-label">Recent activity</div>
+            <div class="panel">
+              <div class="panel-body flush">
+                ${tenantAudit.length === 0 ? `<div class="tbl-empty">No audit events for this tenant yet.</div>` : tenantAudit.map(e => `
+                  <div class="list-row">
+                    <div class="list-dot" style="background:${e.isPlatform ? 'var(--gl-text)' : 'var(--gl-text-faint)'}"></div>
+                    <div class="list-content">
+                      <div class="list-title">${esc(e.kind)}</div>
+                      <div class="list-meta">${esc(e.actor)} · ${esc(e.target || '—')} · ${esc(e.meta || '')}</div>
+                    </div>
+                    <div class="list-time">${e.at}</div>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function setTenantStatus(tenantId, newStatus) {
+  const t = getTenant(tenantId);
+  if (!t) return;
+  const old = t.status;
+  t.status = newStatus;
+  pushAudit({
+    kind: 'tenant.status_changed',
+    actor: getStaff(state.signedInStaffId).name,
+    actorType: 'platform-admin',
+    tenantId: t.id,
+    target: t.name,
+    meta: `${old} → ${newStatus}`,
+    isPlatform: true
+  });
+  toast(`${t.short || t.name}: ${statusLabel(old)} → ${statusLabel(newStatus)}`);
+  renderTenants();
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   USERS — cross-tenant flat list
+   ═══════════════════════════════════════════════════════════════════ */
+function renderUsersBody() {
+  const f = state.usersFilter;
+  let rows = state.users;
+  if (f.tenantKind !== 'all') rows = rows.filter(u => { const t = getTenant(u.tenantId); return t && t.kind === f.tenantKind; });
+  if (f.role !== 'all')       rows = rows.filter(u => u.role === f.role);
+  if (f.status !== 'all')     rows = rows.filter(u => u.status === f.status);
+  if (f.search.trim()) {
+    const q = f.search.toLowerCase();
+    rows = rows.filter(u => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+  }
+
+  const kinds = [
+    { id: 'all',      label: 'All tenants',     count: state.users.length },
+    { id: 'factory',  label: 'Factory users',   count: state.users.filter(u => { const t = getTenant(u.tenantId); return t && t.kind === 'factory'; }).length },
+    { id: 'dealer',   label: 'Dealer users',    count: state.users.filter(u => { const t = getTenant(u.tenantId); return t && t.kind === 'dealer'; }).length },
+    { id: 'reseller', label: 'Reseller users',  count: state.users.filter(u => { const t = getTenant(u.tenantId); return t && t.kind === 'reseller'; }).length }
+  ];
+  const roles = ['all', 'OWNER', 'ADMIN', 'MANAGER', 'ESTIMATOR', 'VIEWER'];
+  const statuses = ['all', 'active', 'invited', 'suspended'];
+
+  return `
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Users</h1>
+        <div class="view-subtitle">Cross-tenant directory · ${rows.length} of ${state.users.length} match these filters</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" onclick="toast('Bulk invite flow — placeholder')">↑ Bulk invite</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      ${kinds.map(k => `
+        <button class="filter-pill ${f.tenantKind === k.id ? 'active' : ''}" onclick="state.usersFilter.tenantKind='${k.id}'; renderUsers()">${k.label}<span class="filter-pill-count">${k.count}</span></button>
+      `).join('')}
+      <div style="width:14px"></div>
+      ${roles.map(r => `
+        <button class="filter-pill ${f.role === r ? 'active' : ''}" onclick="state.usersFilter.role='${r}'; renderUsers()">${r === 'all' ? 'Any role' : roleLabel(r)}</button>
+      `).join('')}
+      <div style="width:14px"></div>
+      ${statuses.map(s => `
+        <button class="filter-pill ${f.status === s ? 'active' : ''}" onclick="state.usersFilter.status='${s}'; renderUsers()">${s === 'all' ? 'Any status' : statusLabel(s)}</button>
+      `).join('')}
+      <div style="flex:1"></div>
+      <input class="search-input" type="text" placeholder="Search by name or email…" value="${esc(f.search)}" oninput="state.usersFilter.search=this.value; renderUsers(); setTimeout(()=>{const el=document.querySelector('.search-input');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" />
+    </div>
+
+    <div class="tbl">
+      <div class="tbl-head" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) 90px 100px 100px 110px 110px">
+        <div>User</div>
+        <div>Tenant</div>
+        <div>Kind</div>
+        <div>Role</div>
+        <div>Status</div>
+        <div>Last active</div>
+        <div></div>
+      </div>
+      ${rows.length === 0 ? `<div class="tbl-empty">No users match these filters.</div>` : rows.map(u => {
+        const t = getTenant(u.tenantId);
+        return `
+          <div class="tbl-row" style="grid-template-columns: minmax(0, 2fr) minmax(0, 1.5fr) 90px 100px 100px 110px 110px">
+            <div style="display:flex;align-items:center;gap:10px">
+              ${avatarHTML(u.email, 'sm')}
+              <div>
+                <div style="font-weight:600">${esc(u.name)}</div>
+                <div class="tbl-secondary">${esc(u.email)}</div>
+              </div>
+            </div>
+            <div onclick="openTenantDetail('${u.tenantId}')" style="font-weight:500">${t ? esc(t.name) : '—'}<div class="tbl-secondary">${t ? esc(t.region) : ''}</div></div>
+            <div>${t ? `<span class="kind-tag ${t.kind}">${kindLabel(t.kind)}</span>` : ''}</div>
+            <div style="font-size:12.5px">${roleLabel(u.role)}</div>
+            <div><span class="status-pill ${u.status}"><span class="dot"></span>${statusLabel(u.status)}</span></div>
+            <div style="font-size:12px;color:var(--gl-text-mute);font-variant-numeric:tabular-nums">${esc(u.lastActive)}</div>
+            <div style="text-align:right">
+              <button class="btn ghost sm" onclick="openStartImpModal('${u.tenantId}','${u.id}')">↗ Impersonate</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   IMPERSONATION — active + recent + start new
+   ═══════════════════════════════════════════════════════════════════ */
+function renderImpersonationBody() {
+  const active = state.impersonationSessions.filter(s => !s.endedAt);
+  const recent = state.impersonationSessions.filter(s => s.endedAt).slice(0, 12);
+
+  return `
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Impersonation</h1>
+        <div class="view-subtitle">${active.length} active · ${recent.length} recent · all sessions are audited and time-boxed to 4 hours</div>
+      </div>
+      <button class="btn primary" onclick="openStartImpModal()">↗ Start new session</button>
+    </div>
+
+    ${active.length > 0 ? `
+      <div class="banner danger">
+        <strong>${active.length} live impersonation session${active.length === 1 ? '' : 's'} in progress.</strong>
+        <span style="opacity:0.85">Every action taken during these sessions emits a platform-admin audit event.</span>
+      </div>
+      <div class="section-label">Live sessions</div>
+      <div class="tbl" style="margin-bottom:22px">
+        <div class="tbl-head" style="grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 2fr) 110px 110px">
+          <div>Staff</div><div>Impersonating</div><div>Reason</div><div>Started</div><div></div>
+        </div>
+        ${active.map(s => {
+          const staff = getStaff(s.impersonatorStaffId);
+          const u = getUser(s.impersonatedUserId);
+          const t = getTenant(s.tenantId);
+          return `
+            <div class="tbl-row" style="grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 2fr) 110px 110px;background:var(--gl-danger-bg)">
+              <div style="display:flex;align-items:center;gap:10px">
+                ${staff ? avatarHTML(staff.email, 'sm') : ''}
+                <div>
+                  <div style="font-weight:600">${staff ? esc(staff.name) : '—'}</div>
+                  <div class="tbl-secondary">${staff ? esc(staff.role) : ''}</div>
+                </div>
+              </div>
+              <div>
+                <div style="font-weight:600">${u ? esc(u.name) : '—'}</div>
+                <div class="tbl-secondary">${t ? esc(t.name) : ''}</div>
+              </div>
+              <div style="font-size:12.5px;color:var(--gl-text)">${esc(s.reason || '—')}</div>
+              <div style="font-size:12px;font-variant-numeric:tabular-nums">${esc(s.startedAt || '—')}</div>
+              <div style="text-align:right"><button class="btn danger sm" onclick="endImpSession('${s.id}')">End now</button></div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    ` : ''}
+
+    <div class="section-label">Recent sessions · last ${recent.length}</div>
+    <div class="tbl">
+      <div class="tbl-head" style="grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 2fr) 90px 90px 110px">
+        <div>Staff</div><div>Impersonated</div><div>Reason</div><div class="tbl-num">Duration</div><div>Ended by</div><div>When</div>
+      </div>
+      ${recent.length === 0 ? `<div class="tbl-empty">No sessions logged yet.</div>` : recent.map(s => {
+        const staff = getStaff(s.impersonatorStaffId);
+        const u = getUser(s.impersonatedUserId);
+        const t = getTenant(s.tenantId);
+        return `
+          <div class="tbl-row" style="grid-template-columns: minmax(0, 1.5fr) minmax(0, 1.5fr) minmax(0, 2fr) 90px 90px 110px">
+            <div style="display:flex;align-items:center;gap:10px">
+              ${staff ? avatarHTML(staff.email, 'sm') : ''}
+              <div>
+                <div style="font-weight:600">${staff ? esc(staff.name) : '—'}</div>
+                <div class="tbl-secondary">${staff ? esc(staff.role) : ''}</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-weight:600">${u ? esc(u.name) : '—'}</div>
+              <div class="tbl-secondary">${t ? esc(t.name) : ''}</div>
+            </div>
+            <div style="font-size:12.5px">${esc((s.reason || '').slice(0, 90))}${s.reason && s.reason.length > 90 ? '…' : ''}</div>
+            <div class="tbl-num"><strong>${s.durationMin}min</strong></div>
+            <div style="font-size:11.5px;color:var(--gl-text-mute);text-transform:uppercase;letter-spacing:0.06em;font-weight:600">${esc(s.endedByReason || '—')}</div>
+            <div style="font-size:12px;color:var(--gl-text-mute);font-variant-numeric:tabular-nums">${fmtDate(s.startedAt)}</div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   AUDIT LOG — cross-tenant timeline
+   ═══════════════════════════════════════════════════════════════════ */
+function renderAuditBody() {
+  const f = state.auditFilter;
+  let rows = state.auditEvents;
+  if (f.scope === 'platform') rows = rows.filter(e => e.isPlatform);
+  if (f.scope === 'tenant')   rows = rows.filter(e => !e.isPlatform);
+  if (f.kind !== 'all')       rows = rows.filter(e => e.kind === f.kind);
+  if (f.search.trim()) {
+    const q = f.search.toLowerCase();
+    rows = rows.filter(e => (e.kind + ' ' + e.actor + ' ' + (e.target || '') + ' ' + (e.meta || '')).toLowerCase().includes(q));
+  }
+
+  const allKinds = [...new Set(state.auditEvents.map(e => e.kind))].sort();
+  const scopes = [
+    { id: 'all',      label: 'All',               count: state.auditEvents.length },
+    { id: 'platform', label: 'Platform actions',  count: state.auditEvents.filter(e => e.isPlatform).length },
+    { id: 'tenant',   label: 'Tenant internal',   count: state.auditEvents.filter(e => !e.isPlatform).length }
+  ];
+
+  return `
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Audit log</h1>
+        <div class="view-subtitle">${rows.length} of ${state.auditEvents.length} events · cross-tenant · append-only · 7 year retention</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn ghost" onclick="toast('Audit export queued · CSV')">↓ Export CSV</button>
+        <button class="btn ghost" onclick="toast('Filter persistence — placeholder')">Save filter</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      ${scopes.map(s => `
+        <button class="filter-pill ${f.scope === s.id ? 'active' : ''}" onclick="state.auditFilter.scope='${s.id}'; renderAudit()">${s.label}<span class="filter-pill-count">${s.count}</span></button>
+      `).join('')}
+      <div style="width:14px"></div>
+      <select class="filter-pill" style="appearance:auto;-webkit-appearance:auto;padding:7px 10px" onchange="state.auditFilter.kind=this.value; renderAudit()">
+        <option value="all" ${f.kind === 'all' ? 'selected' : ''}>Any kind</option>
+        ${allKinds.map(k => `<option value="${esc(k)}" ${f.kind === k ? 'selected' : ''}>${esc(k)}</option>`).join('')}
+      </select>
+      <div style="flex:1"></div>
+      <input class="search-input" type="text" placeholder="Search actor, target, meta…" value="${esc(f.search)}" oninput="state.auditFilter.search=this.value; renderAudit(); setTimeout(()=>{const el=document.querySelector('.search-input');if(el){el.focus();el.setSelectionRange(el.value.length,el.value.length);}},0)" />
+    </div>
+
+    <div class="panel">
+      <div class="panel-body flush">
+        ${rows.length === 0 ? `<div class="tbl-empty">No events match these filters.</div>` : rows.map(e => {
+          const t = e.tenantId ? getTenant(e.tenantId) : null;
+          return `
+            <div class="list-row" style="cursor:default">
+              <div class="list-dot" style="background:${e.isPlatform ? 'var(--gl-text)' : 'var(--gl-text-faint)'};margin-top:9px;width:8px;height:8px"></div>
+              <div class="list-content">
+                <div class="list-title" style="font-size:13px">
+                  ${esc(e.kind)}
+                  ${e.isPlatform ? '<span class="kind-tag platform" style="margin-left:6px">Platform action</span>' : ''}
+                  ${t ? `<span style="margin-left:6px;font-size:11.5px;color:var(--gl-text-mute);font-weight:400">@ ${esc(t.name)}</span>` : ''}
+                </div>
+                <div class="list-meta" style="font-size:11.5px">
+                  <strong style="color:var(--gl-text);font-weight:500">${esc(e.actor)}</strong>
+                  ${e.actorType ? `<span style="color:var(--gl-text-faint)"> · ${esc(e.actorType)}</span>` : ''}
+                  · ${esc(e.target || '—')}
+                  ${e.meta ? ` · <span style="color:var(--gl-text-mute)">${esc(e.meta)}</span>` : ''}
+                </div>
+              </div>
+              <div class="list-time">${esc(e.at)}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SETTINGS — staff team + prefs
+   ═══════════════════════════════════════════════════════════════════ */
+function renderSettingsBody() {
+  return `
+    <div class="view-header">
+      <div>
+        <h1 class="view-title">Settings</h1>
+        <div class="view-subtitle">Platform staff, audit retention, and notification routing</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px">
+      <div class="panel">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">OpenSpec staff</div>
+            <div style="font-size:11.5px;color:var(--gl-text-mute);margin-top:2px">${state.staff.length} members · platform-admin can do anything; platform-support is read-only + impersonate</div>
+          </div>
+          <button class="btn ghost sm" onclick="toast('Invite staff modal — placeholder')">+ Invite staff</button>
+        </div>
+        <div class="panel-body flush">
+          ${state.staff.map(s => `
+            <div class="list-row" style="cursor:default">
+              <div class="staff-avatar" style="background:${s.avatar}">${s.initials}</div>
+              <div class="list-content">
+                <div class="list-title">${esc(s.name)}${s.id === state.signedInStaffId ? ' <span style="font-size:9.5px;font-weight:700;color:var(--gl-text-mute);text-transform:uppercase;letter-spacing:0.08em;margin-left:6px">you</span>' : ''}</div>
+                <div class="list-meta">${esc(s.email)} · ${s.role === 'platform-admin' ? 'Platform admin' : 'Platform support'}</div>
+              </div>
+              <div class="list-time" style="display:flex;gap:6px;align-items:center">
+                <button class="btn ghost sm" onclick="toast('Edit staff member — placeholder')">Edit</button>
+                ${s.id !== state.signedInStaffId ? `<button class="btn ghost sm" onclick="toast('Remove staff member — placeholder')" style="color:var(--gl-danger);border-color:var(--gl-danger)">Remove</button>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Audit retention</div>
+          </div>
+          <div class="panel-body">
+            <div class="field" style="margin-bottom:14px">
+              <label class="field-label">Retention period</label>
+              <select class="select">
+                <option>7 years (default · regulatory floor)</option>
+                <option>5 years</option>
+                <option>3 years</option>
+              </select>
+              <div class="field-help">Audit events are append-only and never deleted before this period elapses.</div>
+            </div>
+            <div class="field">
+              <label class="field-label">Cross-tenant export approval</label>
+              <select class="select">
+                <option>Both platform admins must approve</option>
+                <option>Single platform admin (default)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div class="panel-title">Alert routing</div>
+          </div>
+          <div class="panel-body">
+            <div class="field" style="margin-bottom:14px">
+              <label class="field-label">Critical alerts go to</label>
+              <input class="input" type="text" value="oncall@openspec.com" />
+              <div class="field-help">PagerDuty + Slack #ops-critical mirror.</div>
+            </div>
+            <div class="field">
+              <label class="field-label">Warning alerts</label>
+              <input class="input" type="text" value="#ops-alerts (Slack)" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ONBOARD-NEW-FACTORY WIZARD — 5 steps
+   ═══════════════════════════════════════════════════════════════════ */
+function openOnboardWizard() {
+  state.onboardWizard = {
+    open: true,
+    step: 1,
+    data: {
+      name: '', short: '', region: '', countryCode: 'CA', address: '',
+      plan: 'growth', mrr: 2400, paymentTerms: 'Net 30', currency: 'CAD',
+      ownerName: '', ownerEmail: '', ownerTitle: 'Owner',
+      seats: 15, features: { roBranding: true, customDomain: false, sso: false, erpSync: true },
+      sendInviteImmediately: true
+    }
+  };
+  renderWizard();
+}
+
+function closeWizard() {
+  state.onboardWizard = { open: false };
+  renderWizard();
+}
+
+function wizNext() {
+  const w = state.onboardWizard;
+  if (!w) return;
+  if (w.step === 1) {
+    if (!w.data.name.trim() || !w.data.region.trim()) { toast('Company name and region are required'); return; }
+  }
+  if (w.step === 3) {
+    if (!w.data.ownerName.trim() || !w.data.ownerEmail.includes('@')) { toast('Owner name and a valid email are required'); return; }
+  }
+  if (w.step < 5) { w.step++; renderWizard(); }
+}
+function wizBack() {
+  const w = state.onboardWizard;
+  if (w && w.step > 1) { w.step--; renderWizard(); }
+}
+
+function wizSubmit() {
+  const w = state.onboardWizard;
+  if (!w) return;
+  const d = w.data;
+  const newTenantId = 't-' + (d.short || d.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const newTenant = {
+    id: newTenantId, kind: 'factory', name: d.name, short: d.short || d.name.split(/\s+/)[0],
+    region: d.region, status: 'trial', plan: d.plan, mrr: 0,
+    seats: { used: 0, total: d.seats }, ownerEmail: d.ownerEmail,
+    createdAt: new Date().toISOString().split('T')[0], parentTenantId: null, brandColor: '#0F172A'
+  };
+  state.tenants.push(newTenant);
+  const newUserId = 'u-' + Math.random().toString(36).slice(2, 7);
+  state.users.push({
+    id: newUserId, name: d.ownerName, email: d.ownerEmail, tenantId: newTenantId,
+    role: 'OWNER', status: d.sendInviteImmediately ? 'invited' : 'active', lastActive: 'invited',
+    createdAt: new Date().toISOString().split('T')[0]
+  });
+  pushAudit({
+    kind: 'tenant.created',
+    actor: getStaff(state.signedInStaffId).name,
+    actorType: 'platform-admin',
+    tenantId: newTenantId,
+    target: d.name,
+    meta: `Plan: ${planLabel(d.plan)} · trial · ${d.seats} seats · owner ${d.ownerEmail}`,
+    isPlatform: true
+  });
+  closeWizard();
+  toast(`${d.name} onboarded — invite sent to ${d.ownerEmail}`);
+  state.selectedTenantId = newTenantId;
+  switchView('tenants');
+}
+
+function renderWizard() {
+  const root = $('modal-root');
+  const w = state.onboardWizard;
+  if (!w || !w.open) { root.innerHTML = ''; return; }
+  const d = w.data;
+  const stepLabels = ['Company', 'Plan & billing', 'Initial owner', 'Seats & features', 'Review & send'];
+
+  let body = '';
+  if (w.step === 1) body = `
+    <div class="field" style="margin-bottom:14px">
+      <label class="field-label">Factory legal name *</label>
+      <input class="input" type="text" value="${esc(d.name)}" oninput="state.onboardWizard.data.name=this.value" placeholder="Northforge Manufacturing Co." />
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label class="field-label">Display name (short)</label>
+      <input class="input" type="text" value="${esc(d.short)}" oninput="state.onboardWizard.data.short=this.value" placeholder="Northforge" />
+      <div class="field-help">Used in topbar, navigation, and PDFs. Defaults to the first word of legal name.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="field">
+        <label class="field-label">Region *</label>
+        <input class="input" type="text" value="${esc(d.region)}" oninput="state.onboardWizard.data.region=this.value" placeholder="Hamilton · ON" />
+      </div>
+      <div class="field">
+        <label class="field-label">Country</label>
+        <select class="select" onchange="state.onboardWizard.data.countryCode=this.value">
+          <option value="CA" ${d.countryCode === 'CA' ? 'selected' : ''}>Canada</option>
+          <option value="US" ${d.countryCode === 'US' ? 'selected' : ''}>United States</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Mailing address</label>
+      <input class="input" type="text" value="${esc(d.address)}" oninput="state.onboardWizard.data.address=this.value" placeholder="1234 Industrial Dr, Hamilton, ON L8R 3B7" />
+    </div>
+  `;
+  if (w.step === 2) body = `
+    <div class="field" style="margin-bottom:14px">
+      <label class="field-label">Plan tier *</label>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px">
+        ${['starter', 'growth', 'enterprise'].map(p => `
+          <button class="btn ${d.plan === p ? 'primary' : 'ghost'}" onclick="state.onboardWizard.data.plan='${p}'; state.onboardWizard.data.mrr=${p === 'starter' ? 1200 : p === 'growth' ? 2400 : 4800}; renderWizard()" style="flex-direction:column;align-items:flex-start;padding:14px 16px;height:auto">
+            <div style="font-size:14px;font-weight:600;letter-spacing:-0.012em">${planLabel(p)}</div>
+            <div style="font-size:11.5px;margin-top:4px;opacity:0.75">${p === 'starter' ? '$1,200/mo' : p === 'growth' ? '$2,400/mo' : '$4,800/mo'}</div>
+          </button>
+        `).join('')}
+      </div>
+      <div class="field-help" style="margin-top:8px">Trial of 14 days is applied automatically — MRR begins after trial conversion.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="field">
+        <label class="field-label">Payment terms</label>
+        <select class="select" onchange="state.onboardWizard.data.paymentTerms=this.value">
+          <option ${d.paymentTerms === 'Net 30' ? 'selected' : ''}>Net 30</option>
+          <option ${d.paymentTerms === 'Net 15' ? 'selected' : ''}>Net 15</option>
+          <option ${d.paymentTerms === 'Due on receipt' ? 'selected' : ''}>Due on receipt</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">Billing currency</label>
+        <select class="select" onchange="state.onboardWizard.data.currency=this.value">
+          <option ${d.currency === 'CAD' ? 'selected' : ''}>CAD</option>
+          <option ${d.currency === 'USD' ? 'selected' : ''}>USD</option>
+        </select>
+      </div>
+    </div>
+  `;
+  if (w.step === 3) body = `
+    <div class="field" style="margin-bottom:14px">
+      <label class="field-label">Owner full name *</label>
+      <input class="input" type="text" value="${esc(d.ownerName)}" oninput="state.onboardWizard.data.ownerName=this.value" placeholder="Sam Chen" />
+    </div>
+    <div class="field" style="margin-bottom:14px">
+      <label class="field-label">Owner email *</label>
+      <input class="input" type="email" value="${esc(d.ownerEmail)}" oninput="state.onboardWizard.data.ownerEmail=this.value" placeholder="sam@northforge.com" />
+      <div class="field-help">Magic-link invite goes here. Owner becomes the tenant's first OWNER role.</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Title</label>
+      <input class="input" type="text" value="${esc(d.ownerTitle)}" oninput="state.onboardWizard.data.ownerTitle=this.value" />
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px;cursor:pointer;font-size:12.5px">
+      <input type="checkbox" ${d.sendInviteImmediately ? 'checked' : ''} onchange="state.onboardWizard.data.sendInviteImmediately=this.checked" />
+      Send invite email immediately on creation
+    </label>
+  `;
+  if (w.step === 4) body = `
+    <div class="field" style="margin-bottom:14px">
+      <label class="field-label">Total seats</label>
+      <input class="input" type="number" min="1" max="200" value="${d.seats}" oninput="state.onboardWizard.data.seats=parseInt(this.value)||1" />
+      <div class="field-help">Owner counts as 1 seat. Default cap matches the ${planLabel(d.plan)} plan.</div>
+    </div>
+    <div class="section-label" style="margin-top:20px;margin-bottom:8px">Features</div>
+    ${[
+      { id: 'roBranding',    label: 'Brand & logo upload',     desc: 'Factory logo + brand color in PDFs, emails, dealer chrome.' },
+      { id: 'customDomain',  label: 'Custom domain',           desc: 'Dealer-facing surface served at orders.factory.com (requires DNS).' },
+      { id: 'sso',           label: 'SSO (Google + Microsoft)',desc: 'Replace magic-link with workspace SSO. Available on Growth+.' },
+      { id: 'erpSync',       label: 'ERP sync',                desc: 'One-way push to Soft Tech / Paradigm / LogiKal. Requires config.' }
+    ].map(f => `
+      <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border:0.5px solid ${d.features[f.id] ? 'var(--gl-text)' : 'var(--gl-border)'};background:${d.features[f.id] ? 'rgba(15,23,42,0.03)' : 'transparent'};margin-bottom:6px;cursor:pointer;transition:all 0.12s">
+        <input type="checkbox" ${d.features[f.id] ? 'checked' : ''} onchange="state.onboardWizard.data.features.${f.id}=this.checked; renderWizard()" style="margin-top:3px" />
+        <div>
+          <div style="font-size:13px;font-weight:600">${f.label}</div>
+          <div style="font-size:11.5px;color:var(--gl-text-mute);margin-top:2px">${f.desc}</div>
+        </div>
+      </label>
+    `).join('')}
+  `;
+  if (w.step === 5) {
+    const features = Object.entries(d.features).filter(([_, v]) => v).map(([k]) => ({ roBranding: 'Brand & logo', customDomain: 'Custom domain', sso: 'SSO', erpSync: 'ERP sync' }[k])).join(', ');
+    body = `
+      <div class="banner info" style="margin-top:0">
+        Confirm and send. The owner will receive an invite at <strong>${esc(d.ownerEmail)}</strong> with a magic link valid for 7 days.
+      </div>
+      <div class="tenant-meta-grid" style="margin-top:8px">
+        <div class="tenant-meta-card"><div class="tenant-meta-label">Tenant</div><div class="tenant-meta-value" style="font-size:14px">${esc(d.name)}</div></div>
+        <div class="tenant-meta-card"><div class="tenant-meta-label">Region</div><div class="tenant-meta-value" style="font-size:14px">${esc(d.region)}</div></div>
+        <div class="tenant-meta-card"><div class="tenant-meta-label">Plan</div><div class="tenant-meta-value" style="font-size:14px">${planLabel(d.plan)}</div></div>
+        <div class="tenant-meta-card"><div class="tenant-meta-label">Seats</div><div class="tenant-meta-value" style="font-size:14px">${d.seats}</div></div>
+      </div>
+      <div style="background:rgba(248,250,252,0.6);border:0.5px solid var(--gl-border);padding:14px 16px;margin-top:6px">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gl-text-mute);margin-bottom:6px">Owner</div>
+        <div style="font-size:13.5px;font-weight:600">${esc(d.ownerName)} <span style="font-weight:500;color:var(--gl-text-mute)">· ${esc(d.ownerTitle)}</span></div>
+        <div style="font-size:12px;color:var(--gl-text-mute);margin-top:2px">${esc(d.ownerEmail)}</div>
+      </div>
+      ${features ? `
+        <div style="background:rgba(248,250,252,0.6);border:0.5px solid var(--gl-border);padding:14px 16px;margin-top:10px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--gl-text-mute);margin-bottom:6px">Features enabled</div>
+          <div style="font-size:13px">${esc(features)}</div>
+        </div>
+      ` : ''}
+    `;
+  }
+
+  const isLast = w.step === 5;
+  root.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target === this) closeWizard()">
+      <div class="modal-card wide">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">Onboard new factory</div>
+            <div class="modal-sub">Step ${w.step} of 5 · ${stepLabels[w.step - 1]}</div>
+          </div>
+          <div style="flex:1"></div>
+          <button class="modal-close" onclick="closeWizard()" title="Close">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="wiz-steps">
+            ${stepLabels.map((label, idx) => {
+              const n = idx + 1;
+              const cls = w.step === n ? 'active' : w.step > n ? 'done' : '';
+              return `
+                <div class="wiz-step ${cls}">
+                  <div class="wiz-step-num">${w.step > n ? '✓' : n}</div>
+                  <div>${label}</div>
+                  ${n < 5 ? '<div class="wiz-step-sep" style="margin:0 8px"></div>' : ''}
+                </div>
+              `;
+            }).join('')}
+          </div>
+          ${body}
+        </div>
+        <div class="modal-foot">
+          ${w.step > 1 ? `<button class="btn ghost" onclick="wizBack()">← Back</button>` : '<div></div>'}
+          <div style="flex:1"></div>
+          <button class="btn ghost" onclick="closeWizard()">Cancel</button>
+          ${isLast
+            ? `<button class="btn primary" onclick="wizSubmit()">✓ Create tenant & send invite</button>`
+            : `<button class="btn primary" onclick="wizNext()">Continue →</button>`}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   START-IMPERSONATION MODAL
+   ═══════════════════════════════════════════════════════════════════ */
+function openStartImpModal(tenantId, userId) {
+  state.impModal = {
+    open: true,
+    tenantId: tenantId || '',
+    userId: userId || '',
+    reason: ''
+  };
+  renderImpModal();
+}
+function closeImpModal() { state.impModal = { open: false }; renderImpModal(); }
+
+function startImpersonation() {
+  const m = state.impModal;
+  if (!m) return;
+  if (!m.tenantId || !m.userId) { toast('Pick a tenant and a user first'); return; }
+  if ((m.reason || '').trim().length < 20) { toast('Reason must be at least 20 characters'); return; }
+  const t = getTenant(m.tenantId);
+  const u = getUser(m.userId);
+  const staff = getStaff(state.signedInStaffId);
+  const newSession = {
+    id: 'imp-' + Math.random().toString(36).slice(2, 7),
+    impersonatedUserId: m.userId,
+    tenantId: m.tenantId,
+    impersonatorStaffId: state.signedInStaffId,
+    reason: m.reason,
+    startedAt: new Date().toISOString(),
+    endedAt: null,
+    endedByReason: null,
+    durationMin: 0
+  };
+  state.impersonationSessions.unshift(newSession);
+  state.imp = { active: true, sessionId: newSession.id };
+  pushAudit({
+    kind: 'impersonation.started',
+    actor: staff.name,
+    actorType: 'platform-admin',
+    tenantId: m.tenantId,
+    target: u.name,
+    meta: `Reason: ${m.reason.slice(0, 60)}${m.reason.length > 60 ? '…' : ''}`,
+    isPlatform: true
+  });
+  closeImpModal();
+  renderImpBanner();
+  toast(`Now impersonating ${u.name} (${t.name}) — every action audited`);
+  switchView('impersonation');
+}
+
+function endImpSession(sessionId) {
+  const session = state.impersonationSessions.find(s => s.id === sessionId);
+  if (!session) return;
+  session.endedAt = new Date().toISOString();
+  session.endedByReason = 'manual';
+  session.durationMin = Math.max(1, Math.floor((Date.now() - new Date(session.startedAt).getTime()) / 60000));
+  if (state.imp.sessionId === sessionId) {
+    state.imp = { active: false, sessionId: null };
+    renderImpBanner();
+  }
+  const u = getUser(session.impersonatedUserId);
+  const staff = getStaff(session.impersonatorStaffId);
+  pushAudit({
+    kind: 'impersonation.ended',
+    actor: staff.name,
+    actorType: 'platform-admin',
+    tenantId: session.tenantId,
+    target: u.name,
+    meta: `Session ${session.durationMin}min · manual end`,
+    isPlatform: true
+  });
+  toast(`Impersonation ended · ${session.durationMin}min logged`);
+  renderImpersonation();
+}
+
+function renderImpBanner() {
+  const host = $('impBannerHost');
+  if (!state.imp.active || !state.imp.sessionId) { host.innerHTML = ''; return; }
+  const session = state.impersonationSessions.find(s => s.id === state.imp.sessionId);
+  if (!session) { host.innerHTML = ''; return; }
+  const u = getUser(session.impersonatedUserId);
+  const t = getTenant(session.tenantId);
+  host.innerHTML = `
+    <div class="imp-banner">
+      <strong>Impersonating ${u ? esc(u.name) : '—'}</strong>
+      <span style="opacity:0.85">in ${t ? esc(t.name) : '—'} · every action audited</span>
+      <div class="imp-banner-spacer"></div>
+      <kbd>esc</kbd> <span style="opacity:0.85">to end</span>
+      <button onclick="endImpSession('${session.id}')">End session</button>
+    </div>
+  `;
+}
+
+function renderImpModal() {
+  const root = $('modal-root');
+  const m = state.impModal;
+  if (!m || !m.open) {
+    // Don't blow away the wizard if it's the modal currently open
+    if (!state.onboardWizard || !state.onboardWizard.open) root.innerHTML = '';
+    return;
+  }
+  const tenantsForPicker = state.tenants.filter(t => t.status !== 'churned');
+  const usersForPicker = m.tenantId ? tenantUsers(m.tenantId).filter(u => u.status === 'active') : [];
+  root.innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target === this) closeImpModal()">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div>
+            <div class="modal-title">Start impersonation session</div>
+            <div class="modal-sub">Time-boxed to 4 hours · all actions audited · destructive actions blocked</div>
+          </div>
+          <div style="flex:1"></div>
+          <button class="modal-close" onclick="closeImpModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <div class="field" style="margin-bottom:14px">
+            <label class="field-label">Tenant *</label>
+            <select class="select" onchange="state.impModal.tenantId=this.value; state.impModal.userId=''; renderImpModal()">
+              <option value="">— Pick a tenant —</option>
+              ${tenantsForPicker.map(t => `<option value="${t.id}" ${m.tenantId === t.id ? 'selected' : ''}>${esc(t.name)} · ${kindLabel(t.kind)} · ${esc(t.region)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:14px">
+            <label class="field-label">User to impersonate *</label>
+            <select class="select" onchange="state.impModal.userId=this.value" ${!m.tenantId ? 'disabled' : ''}>
+              <option value="">${m.tenantId ? '— Pick a user —' : 'Pick a tenant first'}</option>
+              ${usersForPicker.map(u => `<option value="${u.id}" ${m.userId === u.id ? 'selected' : ''}>${esc(u.name)} · ${roleLabel(u.role)} · ${esc(u.email)}</option>`).join('')}
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Reason * <span style="text-transform:none;letter-spacing:-0.005em;font-weight:500;color:var(--gl-text-faint)">— minimum 20 characters</span></label>
+            <textarea class="textarea" oninput="state.impModal.reason=this.value; document.getElementById('reasonCount').textContent=this.value.length" placeholder="e.g. Dealer reported PDF generation timeout on quote Q-1234 — reproducing the failure." rows="4">${esc(m.reason)}</textarea>
+            <div class="field-help">Recorded in the audit log. Will be visible to OpenSpec staff and to the tenant owner on request. <span id="reasonCount" style="font-variant-numeric:tabular-nums">${m.reason.length}</span> chars.</div>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" onclick="closeImpModal()">Cancel</button>
+          <div style="flex:1"></div>
+          <button class="btn primary" onclick="startImpersonation()">↗ Start session</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+function acknowledgeAlert(id) {
+  const a = state.alerts.find(x => x.id === id);
+  if (!a) return;
+  a.status = 'acknowledged';
+  toast('Alert acknowledged');
+  renderOverview();
+}
+
+function openTenantDetail(id) {
+  state.selectedTenantId = id;
+  if (state.currentView === 'tenants') renderTenants();
+  else switchView('tenants');
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   INIT
+   ═══════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('.nav-item').forEach(b => {
+  b.addEventListener('click', () => switchView(b.dataset.view));
+});
+
+// OTP auto-advance
+document.querySelectorAll('.otp-cell').forEach((cell, i, arr) => {
+  cell.addEventListener('input', e => {
+    cell.value = cell.value.replace(/\D/g, '').slice(0, 1);
+    if (cell.value && i < arr.length - 1) arr[i + 1].focus();
+  });
+  cell.addEventListener('keydown', e => {
+    if (e.key === 'Backspace' && !cell.value && i > 0) arr[i - 1].focus();
+    if (e.key === 'Enter') loginStep2();
+  });
+});
+
+// Enter on email/password jumps to step 1 submit
+['loginEmail', 'loginPass'].forEach(id => {
+  $(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') loginStep1();
+  });
+});
+
+// Esc ends active impersonation; also closes any modal
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (state.imp && state.imp.active && state.imp.sessionId) {
+    endImpSession(state.imp.sessionId);
+  } else if (state.onboardWizard && state.onboardWizard.open) {
+    closeWizard();
+  } else if (state.impModal && state.impModal.open) {
+    closeImpModal();
+  }
+});
+
+renderStaffBadge();
+
+// Demo: skip login. The login flow is still reachable — click the staff
+// badge in the topbar and confirm "Sign out" to see it again.
+state.authed = true;
+$('loginRoot').style.display = 'none';
+$('appShell').classList.add('visible');
+switchView('overview');
+
+</script>
+</body>
+</html>
